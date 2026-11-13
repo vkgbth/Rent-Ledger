@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rent Ledger — WhatsApp reminders</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F6F3EA;
+    --paper-line:#DCD6C4;
+    --ink:#1C2B22;
+    --ink-soft:#5B6A5F;
+    --green-deep:#1F3A2E;
+    --green-mid:#2E5240;
+    --gold:#B3872F;
+    --gold-soft:#E9DDB8;
+    --red-stamp:#A23B2E;
+    --card:#FFFFFF;
+    --shadow:0 1px 2px rgba(28,43,34,0.08);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    background-image:linear-gradient(var(--paper-line) 1px, transparent 1px);
+    background-size:100% 42px;
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    padding:32px 20px 80px;
+    min-height:100vh;
+  }
+  .wrap{max-width:780px;margin:0 auto;}
+  header{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    border-bottom:2px solid var(--green-deep);
+    padding-bottom:14px;margin-bottom:8px;
+  }
+  h1{font-family:'Fraunces',serif;font-weight:600;font-size:30px;margin:0;color:var(--green-deep);letter-spacing:-0.3px;}
+  .month-tag{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.08em;}
+  .storage-note{font-size:12px;color:var(--ink-soft);margin:8px 0 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
+  .storage-note .links{display:flex;gap:14px;}
+  .storage-note a{color:var(--green-mid);cursor:pointer;text-decoration:underline;font-weight:500;}
+
+  .summary{display:flex;gap:14px;margin-bottom:28px;flex-wrap:wrap;}
+  .sum-card{flex:1;min-width:120px;background:var(--card);border:1px solid var(--paper-line);border-radius:6px;padding:12px 16px;box-shadow:var(--shadow);}
+  .sum-card .n{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:500;color:var(--green-deep);}
+  .sum-card .l{font-size:12px;color:var(--ink-soft);margin-top:2px;}
+
+  section{margin-bottom:32px;}
+  .section-head{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+  .section-head h2{font-family:'Fraunces',serif;font-weight:500;font-size:18px;margin:0;color:var(--green-deep);}
+  .section-head .rule{flex:1;height:1px;background:var(--paper-line);}
+  .section-head button.ghost{margin-left:auto;}
+
+  .tenant-row{
+    background:var(--card);border:1px solid var(--paper-line);border-left:4px solid var(--green-mid);
+    border-radius:6px;padding:14px 18px;margin-bottom:10px;box-shadow:var(--shadow);
+    display:grid;grid-template-columns:1fr auto auto;gap:6px 20px;align-items:center;
+    position:relative;overflow:hidden;
+  }
+  .tenant-row.overdue{border-left-color:var(--red-stamp);}
+  .tenant-row.paid{border-left-color:var(--gold);}
+  .t-main{grid-column:1;grid-row:1 / span 2;}
+  .t-name{font-weight:600;font-size:16px;}
+  .t-phone{font-size:12.5px;color:var(--ink-soft);font-family:'JetBrains Mono',monospace;margin-top:2px;}
+  .t-amount{font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:500;text-align:right;grid-column:2;grid-row:1;}
+  .t-status{font-size:12px;text-align:right;grid-column:2;grid-row:2;}
+  .t-status.due-soon{color:var(--gold);}
+  .t-status.overdue{color:var(--red-stamp);font-weight:500;}
+  .t-status.ok{color:var(--ink-soft);}
+  .t-status.paid{color:var(--green-mid);font-weight:500;}
+  .t-actions{grid-column:3;grid-row:1/span 2;display:flex;flex-direction:column;gap:6px;align-items:flex-end;}
+  .t-actions .row{display:flex;gap:4px;}
+  .t-reminder{margin-top:6px;font-size:12px;color:var(--ink-soft);}
+  .t-reminder summary{cursor:pointer;list-style:none;}
+  .t-reminder summary::-webkit-details-marker{display:none;}
+  .t-reminder .rem-count{font-family:'JetBrains Mono',monospace;color:var(--green-mid);font-weight:500;}
+  .t-reminder ul{margin:6px 0 0;padding-left:16px;font-family:'JetBrains Mono',monospace;font-size:11.5px;}
+  .t-reminder .none{font-style:italic;}
+  .ov{display:none;position:fixed;inset:0;background:rgba(28,43,34,.55);z-index:50;align-items:center;justify-content:center;padding:16px;}
+  .ov.open{display:flex;}
+  .box{background:#fff;border-radius:8px;padding:20px;width:100%;max-width:420px;max-height:92vh;overflow:auto;}
+  .rc{border:2px solid var(--green-deep);border-radius:6px;padding:16px;}
+  .rc h3{font-family:'Fraunces',serif;margin:0 0 2px;color:var(--green-deep);font-size:22px;}
+  .rc .big{font-family:'JetBrains Mono',monospace;font-size:26px;margin:8px 0;color:var(--green-deep);}
+  .rc table{width:100%;font-size:13px;border-collapse:collapse;margin-top:8px;}
+  .rc td{padding:4px 0;border-top:1px solid var(--paper-line);}
+  .rc td:last-child{text-align:right;font-family:'JetBrains Mono',monospace;}
+  .t-small{font-size:11px;color:var(--ink-soft);display:block;font-family:'Inter',sans-serif;margin-top:3px;}
+  @media print{body{background:none;padding:0;}.wrap,.noprint{display:none!important;}.ov{position:static;background:none;padding:0;}.box{max-width:none;padding:0;}}
+  .stamp{
+    position:absolute;right:130px;top:50%;transform:translateY(-50%) rotate(-8deg);
+    border:2px solid var(--gold);color:var(--gold);font-family:'JetBrains Mono',monospace;
+    font-size:11px;font-weight:500;letter-spacing:0.12em;padding:3px 8px;border-radius:4px;
+    text-transform:uppercase;opacity:0.85;pointer-events:none;
+  }
+  button{
+    font-family:'Inter',sans-serif;font-size:13px;font-weight:500;cursor:pointer;border-radius:5px;
+    border:1px solid var(--green-deep);background:var(--green-deep);color:#fff;padding:7px 14px;transition:opacity .15s;
+  }
+  button:hover{opacity:0.88;}
+  button.gold{background:var(--gold);border-color:var(--gold);}
+  button.ghost{background:transparent;color:var(--ink-soft);border-color:var(--paper-line);font-weight:400;font-size:12px;padding:6px 10px;}
+  button.ghost:hover{color:var(--ink);border-color:var(--ink-soft);}
+
+  .form-card{background:var(--card);border:1px solid var(--paper-line);border-radius:8px;padding:20px;box-shadow:var(--shadow);}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;}
+  .field{display:flex;flex-direction:column;gap:4px;}
+  .field.full{grid-column:1/-1;}
+  label{font-size:12px;color:var(--ink-soft);font-weight:500;}
+  input,textarea{font-family:'Inter',sans-serif;font-size:14px;padding:8px 10px;border:1px solid var(--paper-line);border-radius:5px;background:#FCFBF7;color:var(--ink);}
+  input:focus,textarea:focus{outline:2px solid var(--gold-soft);border-color:var(--gold);}
+  textarea{resize:vertical;min-height:64px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.5;}
+  .hint{font-size:11px;color:var(--ink-soft);margin-top:6px;}
+  .form-actions{margin-top:14px;display:flex;gap:10px;justify-content:flex-end;}
+
+  .empty{text-align:center;padding:36px 20px;color:var(--ink-soft);font-size:14px;border:1px dashed var(--paper-line);border-radius:8px;}
+
+  table.history{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--paper-line);border-radius:6px;overflow:hidden;font-size:13px;}
+  table.history th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-soft);background:#FCFBF7;padding:8px 12px;border-bottom:1px solid var(--paper-line);}
+  table.history td{padding:8px 12px;border-bottom:1px solid var(--paper-line);}
+  table.history tr:last-child td{border-bottom:none;}
+  #importFile{display:none;}
+
+  @media (max-width:520px){
+    .form-grid{grid-template-columns:1fr;}
+    .tenant-row{grid-template-columns:1fr auto;}
+    .t-actions{grid-column:2;grid-row:1/span 2;}
+    .stamp{display:none;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Rent ledger</h1>
+    <span class="month-tag" id="monthTag"></span>
+  </header>
+  <div class="storage-note">
+    <span>Saved in this browser only, on this device.</span>
+    <span class="links">
+      <a id="exportLink">Export backup</a>
+      <a id="importLink">Import backup</a>
+    </span>
+    <input type="file" id="importFile" accept="application/json">
+  </div>
+
+  <div class="summary" id="summary"></div>
+
+  <section>
+    <div class="section-head"><h2>Tenants</h2><div class="rule"></div></div>
+    <div id="tenantList"></div>
+  </section>
+
+  <section>
+    <div class="section-head"><h2>Payments &amp; receipts</h2><div class="rule"></div><span style="font-size:11px;color:var(--ink-soft);">auto-cleared after 2 months</span></div>
+    <div id="historyBox"></div>
+  </section>
+
+  <section>
+    <div class="section-head"><h2 id="formTitle">Add a tenant</h2><div class="rule"></div></div>
+    <div class="form-card">
+      <div class="form-grid">
+        <div class="field">
+          <label for="fName">Name</label>
+          <input id="fName" placeholder="Rajesh Kumar">
+        </div>
+        <div class="field">
+          <label for="fPhone">WhatsApp number (country code, no + or spaces)</label>
+          <input id="fPhone" placeholder="919835012345">
+        </div>
+        <div class="field">
+          <label for="fAmount">Monthly rent (₹)</label>
+          <input id="fAmount" type="number" placeholder="12000">
+        </div>
+        <div class="field">
+          <label for="fDueDay">Due day of month</label>
+          <input id="fDueDay" type="number" min="1" max="31" placeholder="5">
+        </div>
+        <div class="field full">
+          <label for="fMessage">Reminder message — use {name}, {amount} (balance due), {dueDate}</label>
+          <textarea id="fMessage"></textarea>
+        </div>
+      </div>
+      <div class="hint">Sending opens WhatsApp with this message already typed in — you tap send there yourself.</div>
+      <div class="form-actions">
+        <button class="ghost" id="cancelEdit" style="display:none;">Cancel</button>
+        <button id="saveTenant">Save tenant</button>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="ov" id="payOv"><div class="box">
+  <h2 style="margin:0 0 4px;font-family:'Fraunces',serif" id="payTitle">Record payment</h2>
+  <div class="hint" id="payHint" style="margin:0 0 12px"></div>
+  <div class="form-grid">
+    <div class="field"><label>Amount received (₹)</label><input id="payAmt" type="number"></div>
+    <div class="field"><label>Date received</label><input id="payDate" type="date"></div>
+    <div class="field full"><label>Mode / note (optional)</label><input id="payNote" placeholder="UPI, cash, balance next week…"></div>
+  </div>
+  <div class="form-actions"><button class="ghost" onclick="closeOv('payOv')">Cancel</button><button onclick="savePay()">Save &amp; make receipt</button></div>
+</div></div>
+<div class="ov" id="rcOv"><div class="box">
+  <div id="rcCard"></div>
+  <div class="field noprint" style="margin-top:12px"><label>Issued by (your name, saved for next time)</label><input id="rcBy"></div>
+  <div class="form-actions noprint" style="flex-wrap:wrap"><button class="ghost" onclick="closeOv('rcOv')">Close</button><button class="ghost" onclick="window.print()">Print / PDF</button><button class="ghost" onclick="rcCopy()">Copy</button><button onclick="rcWa()">Send on WhatsApp</button></div>
+</div></div>
+
+<script>
+const DEFAULT_TEMPLATE = "Hi {name}, this is a friendly reminder that your rent of ₹{amount} is due on {dueDate}. Kindly make the payment at your earliest convenience. Thank you!";
+const STORE_KEY = 'rentLedger.v2';
+let tenants = [];
+let payments = []; // {id, tenantId, month:'YYYY-MM', paidOn: ISO date, amount}
+let settings = {issuedBy:'', seq:0};
+let reminders = []; // {id, tenantId, month:'YYYY-MM', sentAt: ISO datetime}
+let editingId = null;
+
+const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+function monthKey(y,m){ return y + '-' + String(m+1).padStart(2,'0'); }
+
+function loadData(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(raw){
+      const parsed = JSON.parse(raw);
+      tenants = parsed.tenants || [];
+      payments = parsed.payments || [];
+      reminders = parsed.reminders || [];
+      settings = parsed.settings || settings;
+    }
+  }catch(e){ tenants = []; payments = []; reminders = []; }
+  cleanupOldPayments();
+  render();
+}
+
+function saveData(){
+  localStorage.setItem(STORE_KEY, JSON.stringify({tenants, payments, reminders, settings}));
+}
+
+function cleanupOldPayments(){
+  const now = new Date();
+  const cutoff = new Date(now.getFullYear(), now.getMonth()-2, now.getDate());
+  const before = payments.length + reminders.length;
+  payments = payments.filter(p => new Date(p.paidOn) >= cutoff);
+  reminders = reminders.filter(r => new Date(r.sentAt) >= cutoff);
+  if(payments.length + reminders.length !== before) saveData();
+  let ch = false;
+  [...payments].filter(p=>!p.receiptNo).sort((a,b)=>new Date(a.paidOn)-new Date(b.paidOn)).forEach(p=>{ p.receiptNo = nextNo(); ch = true; });
+  if(ch) saveData();
+}
+function nextNo(){ settings.seq = (settings.seq||0) + 1; return 'R-' + String(settings.seq).padStart(4,'0'); }
+const rs = n => '₹' + Number(n).toLocaleString('en-IN');
+function cyclePays(t){ return payments.filter(p=>p.tenantId===t.id && p.month===currentCycleKey()); }
+function paidSum(t){ return cyclePays(t).reduce((s,p)=>s+Number(p.amount),0); }
+function balanceOf(t){ return Math.max(0, Number(t.amount) - paidSum(t)); }
+
+function lastDayOf(y,m){ return new Date(y, m+1, 0).getDate(); }
+
+function currentCycleDueDate(t){
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), Math.min(Number(t.dueDay), lastDayOf(now.getFullYear(), now.getMonth())));
+}
+
+function currentCycleKey(){
+  const now = new Date();
+  return monthKey(now.getFullYear(), now.getMonth());
+}
+
+function isPaidThisCycle(t){ return cyclePays(t).length>0 && balanceOf(t)<=0; }
+
+function formatDate(d){ return d.getDate() + ' ' + monthNames[d.getMonth()].slice(0,3) + ' ' + d.getFullYear(); }
+function formatDateISO(iso){ return formatDate(new Date(iso)); }
+function formatTime(d){ return d.toLocaleTimeString('en-IN', {hour:'numeric', minute:'2-digit', hour12:true}); }
+function formatDateTimeISO(iso){ const d = new Date(iso); return formatDate(d) + ', ' + formatTime(d); }
+function remindersThisCycle(t){
+  return reminders
+    .filter(r => r.tenantId === t.id && r.month === currentCycleKey())
+    .sort((a,b)=> new Date(b.sentAt) - new Date(a.sentAt));
+}
+
+function daysUntil(d){
+  const now = new Date();
+  const a = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const b = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  return Math.round((b-a) / 86400000);
+}
+
+function resetForm(){
+  editingId = null;
+  document.getElementById('formTitle').textContent = 'Add a tenant';
+  document.getElementById('fName').value = '';
+  document.getElementById('fPhone').value = '';
+  document.getElementById('fAmount').value = '';
+  document.getElementById('fDueDay').value = '';
+  document.getElementById('fMessage').value = DEFAULT_TEMPLATE;
+  document.getElementById('cancelEdit').style.display = 'none';
+}
+
+function editTenant(id){
+  const t = tenants.find(x=>x.id===id);
+  if(!t) return;
+  editingId = id;
+  document.getElementById('formTitle').textContent = 'Edit tenant';
+  document.getElementById('fName').value = t.name;
+  document.getElementById('fPhone').value = t.phone;
+  document.getElementById('fAmount').value = t.amount;
+  document.getElementById('fDueDay').value = t.dueDay;
+  document.getElementById('fMessage').value = t.message;
+  document.getElementById('cancelEdit').style.display = 'inline-block';
+  document.getElementById('formTitle').scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+function deleteTenant(id){
+  if(!confirm('Remove this tenant and their history?')) return;
+  tenants = tenants.filter(x=>x.id!==id);
+  payments = payments.filter(p=>p.tenantId!==id);
+  reminders = reminders.filter(r=>r.tenantId!==id);
+  saveData();
+  render();
+}
+
+function buildMessage(t){
+  const due = currentCycleDueDate(t);
+  const ps = paidSum(t);
+  return t.message
+    .replaceAll('{name}', t.name)
+    .replaceAll('{amount}', balanceOf(t).toLocaleString('en-IN'))
+    .replaceAll('{dueDate}', formatDate(due)) + (ps>0 ? ' (Already received ' + rs(ps) + ' this month.)' : '');
+}
+
+function sendReminder(id){
+  const t = tenants.find(x=>x.id===id);
+  if(!t) return;
+  const msg = buildMessage(t);
+  const url = 'https://wa.me/' + t.phone.replace(/[^0-9]/g,'') + '?text=' + encodeURIComponent(msg);
+  reminders.push({
+    id: 'r_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
+    tenantId: id,
+    month: currentCycleKey(),
+    sentAt: new Date().toISOString()
+  });
+  saveData();
+  window.open(url, '_blank');
+  render();
+}
+
+let payFor = null, rcPid = null;
+function closeOv(id){ document.getElementById(id).classList.remove('open'); }
+function openPay(id){
+  const t = tenants.find(x=>x.id===id); if(!t) return;
+  payFor = id;
+  const n = new Date();
+  document.getElementById('payAmt').value = balanceOf(t);
+  document.getElementById('payDate').value = n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');
+  document.getElementById('payNote').value = '';
+  document.getElementById('payTitle').textContent = 'Payment from ' + t.name;
+  document.getElementById('payHint').textContent = 'Balance due ' + rs(balanceOf(t)) + ' of ' + rs(t.amount) + '. Edit the amount if it is a part payment.';
+  document.getElementById('payOv').classList.add('open');
+}
+function savePay(){
+  const t = tenants.find(x=>x.id===payFor); if(!t) return;
+  const amt = Number(document.getElementById('payAmt').value);
+  const ds = document.getElementById('payDate').value;
+  if(!(amt>0) || !ds){ alert('Enter the amount and the date received.'); return; }
+  if(amt > balanceOf(t) && !confirm('This is more than the balance of ' + rs(balanceOf(t)) + '. Record anyway?')) return;
+  const [y,m,d] = ds.split('-').map(Number), n = new Date();
+  const rec = {
+    id: 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
+    tenantId: t.id, tenantName: t.name, month: currentCycleKey(),
+    paidOn: new Date(y, m-1, d, n.getHours(), n.getMinutes()).toISOString(),
+    amount: amt, rent: Number(t.amount), note: document.getElementById('payNote').value.trim(), receiptNo: nextNo()
+  };
+  payments.push(rec); saveData(); closeOv('payOv'); render(); showReceipt(rec.id);
+}
+function rcFigures(p){
+  const t = tenants.find(x=>x.id===p.tenantId);
+  const rent = Number(p.rent || (t ? t.amount : p.amount));
+  const same = payments.filter(x=>x.tenantId===p.tenantId && x.month===p.month).sort((a,b)=>a.id<b.id?-1:1);
+  const till = same.slice(0, same.findIndex(x=>x.id===p.id)+1).reduce((s,x)=>s+Number(x.amount),0);
+  return {t, rent, till, bal: Math.max(0, rent-till)};
+}
+function rcText(p){
+  const f = rcFigures(p), [y,m] = p.month.split('-');
+  return ['*Rent Receipt* ' + p.receiptNo,
+    'Received with thanks from ' + (f.t ? f.t.name : p.tenantName),
+    'Amount received: ' + rs(p.amount) + (p.note ? ' (' + p.note + ')' : ''),
+    'Date: ' + formatDateISO(p.paidOn),
+    'Rent for ' + monthNames[Number(m)-1] + ' ' + y + ': ' + rs(f.rent),
+    'Total paid so far: ' + rs(f.till),
+    f.bal > 0 ? 'Balance due: ' + rs(f.bal) : 'Balance: Nil - rent fully paid',
+    settings.issuedBy ? '- ' + settings.issuedBy : ''].filter(Boolean).join('\n');
+}
+function showReceipt(pid){ rcPid = pid; document.getElementById('rcBy').value = settings.issuedBy || ''; renderRc(); document.getElementById('rcOv').classList.add('open'); }
+function renderRc(){
+  const p = payments.find(x=>x.id===rcPid); if(!p) return;
+  const f = rcFigures(p), [y,m] = p.month.split('-');
+  document.getElementById('rcCard').innerHTML = `<div class="rc"><h3>Rent receipt</h3>
+    <div class="t-small">${escapeHtml(p.receiptNo)} · ${formatDateISO(p.paidOn)}</div>
+    <div style="margin-top:10px;font-size:13px">Received with thanks from <b>${escapeHtml(f.t ? f.t.name : p.tenantName)}</b></div>
+    <div class="big">${rs(p.amount)}</div>
+    ${p.note ? '<div class="t-small">' + escapeHtml(p.note) + '</div>' : ''}
+    <table><tr><td>Rent for ${monthNames[Number(m)-1]} ${y}</td><td>${rs(f.rent)}</td></tr>
+    <tr><td>Total paid so far</td><td>${rs(f.till)}</td></tr>
+    <tr><td><b>Balance due</b></td><td><b>${f.bal > 0 ? rs(f.bal) : 'Nil — paid in full'}</b></td></tr></table>
+    ${settings.issuedBy ? '<div class="t-small" style="margin-top:12px">Issued by ' + escapeHtml(settings.issuedBy) + '</div>' : ''}</div>`;
+}
+document.getElementById('rcBy').addEventListener('input', e=>{ settings.issuedBy = e.target.value.trim(); saveData(); renderRc(); });
+function rcCopy(){ const p = payments.find(x=>x.id===rcPid); if(p) navigator.clipboard.writeText(rcText(p)).then(()=>alert('Receipt copied.')); }
+function rcWa(){
+  const p = payments.find(x=>x.id===rcPid); if(!p) return;
+  const t = tenants.find(x=>x.id===p.tenantId);
+  window.open('https://wa.me/' + (t ? t.phone.replace(/[^0-9]/g,'') : '') + '?text=' + encodeURIComponent(rcText(p)), '_blank');
+}
+
+function undoPaid(paymentId){
+  payments = payments.filter(p=>p.id!==paymentId);
+  saveData();
+  render();
+}
+
+document.getElementById('saveTenant').addEventListener('click', ()=>{
+  const name = document.getElementById('fName').value.trim();
+  const phone = document.getElementById('fPhone').value.trim();
+  const amount = document.getElementById('fAmount').value;
+  const dueDay = document.getElementById('fDueDay').value;
+  const message = document.getElementById('fMessage').value.trim() || DEFAULT_TEMPLATE;
+
+  if(!name || !phone || !amount || !dueDay){
+    alert('Fill in name, WhatsApp number, rent amount, and due day.');
+    return;
+  }
+  if(editingId){
+    const t = tenants.find(x=>x.id===editingId);
+    Object.assign(t, {name, phone, amount, dueDay, message});
+  } else {
+    tenants.push({
+      id: 't_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+      name, phone, amount, dueDay, message
+    });
+  }
+  saveData();
+  resetForm();
+  render();
+});
+
+document.getElementById('cancelEdit').addEventListener('click', resetForm);
+
+document.getElementById('exportLink').addEventListener('click', ()=>{
+  const blob = new Blob([JSON.stringify({tenants, payments, reminders, settings}, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'rent-ledger-backup-' + currentCycleKey() + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById('importLink').addEventListener('click', ()=>{
+  document.getElementById('importFile').click();
+});
+
+document.getElementById('importFile').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    try{
+      const parsed = JSON.parse(reader.result);
+      if(!confirm('This will replace your current tenant list and history with the backup file. Continue?')) return;
+      tenants = parsed.tenants || [];
+      payments = parsed.payments || [];
+      reminders = parsed.reminders || [];
+      settings = parsed.settings || settings;
+      cleanupOldPayments();
+      saveData();
+      render();
+    }catch(err){
+      alert('Could not read that file — make sure it is a rent ledger backup JSON.');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+function escapeHtml(s){
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function render(){
+  const now = new Date();
+  document.getElementById('monthTag').textContent = monthNames[now.getMonth()] + ' ' + now.getFullYear();
+
+  const list = document.getElementById('tenantList');
+  if(tenants.length === 0){
+    list.innerHTML = '<div class="empty">No tenants yet. Add one below to start sending reminders.</div>';
+  } else {
+    const sorted = [...tenants].sort((a,b)=> currentCycleDueDate(a) - currentCycleDueDate(b));
+    list.innerHTML = sorted.map(t=>{
+      const due = currentCycleDueDate(t);
+      const d = daysUntil(due);
+      const paidRecord = isPaidThisCycle(t) ? cyclePays(t).slice(-1)[0] : null;
+      const bal = balanceOf(t), ps = paidSum(t), part = ps > 0 && bal > 0;
+      let rowClass = 'tenant-row';
+      let statusClass = 'ok';
+      let statusText = 'Due in ' + d + ' days · ' + formatDate(due);
+      if(d===0) statusText = 'Due today · ' + formatDate(due);
+      if(d < 0){ rowClass += ' overdue'; statusClass = 'overdue'; statusText = 'Overdue by ' + Math.abs(d) + ' days'; }
+      else if(d <= 3){ statusClass = 'due-soon'; }
+      if(paidRecord){ rowClass += ' paid'; statusClass = 'paid'; statusText = 'Paid in full · ' + formatDateISO(paidRecord.paidOn); }
+      else if(part){ statusText = 'Part-paid · ' + statusText; }
+
+      const rems = remindersThisCycle(t);
+      const reminderHtml = rems.length
+        ? `<details class="t-reminder"><summary>Reminded <span class="rem-count">${rems.length}&times;</span> · last ${formatDateTimeISO(rems[0].sentAt)}</summary><ul>${rems.map(r=>'<li>'+formatDateTimeISO(r.sentAt)+'</li>').join('')}</ul></details>`
+        : `<div class="t-reminder"><span class="none">No reminder sent this month</span></div>`;
+
+      const actions = paidRecord
+        ? `<button class="ghost" onclick="showReceipt('${paidRecord.id}')">Receipt</button><button class="ghost" onclick="undoPaid('${paidRecord.id}')">Undo last</button>`
+        : `<button onclick="sendReminder('${t.id}')">${rems.length ? 'Remind again' : 'Send reminder'}</button>
+           <button class="gold" onclick="openPay('${t.id}')">Record payment</button>`;
+
+      return `<div class="${rowClass}">
+        <div class="t-main">
+          <div class="t-name">${escapeHtml(t.name)}</div>
+          <div class="t-phone">+${escapeHtml(t.phone)}</div>
+          ${ps ? '<div class="t-small">Received: ' + cyclePays(t).map(q=>rs(q.amount)+' on '+formatDateISO(q.paidOn).slice(0,-5)).join(' · ') + '</div>' : ''}
+          ${reminderHtml}
+        </div>
+        <div class="t-amount">${part ? rs(bal) + '<small class="t-small">left of ' + rs(t.amount) + '</small>' : rs(t.amount)}</div>
+        <div class="t-status ${statusClass}">${statusText}</div>
+        ${paidRecord ? '<div class="stamp">Paid</div>' : ''}
+        <div class="t-actions">
+          <div class="row">${actions}</div>
+          <div class="row">
+            <button class="ghost" onclick="editTenant('${t.id}')">Edit</button>
+            <button class="ghost" onclick="deleteTenant('${t.id}')">Delete</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  const curKey = currentCycleKey();
+  const overdueCount = tenants.filter(t=> !isPaidThisCycle(t) && daysUntil(currentCycleDueDate(t))<0).length;
+  const dueSoonCount = tenants.filter(t=>{ if(isPaidThisCycle(t)) return false; const d=daysUntil(currentCycleDueDate(t)); return d>=0 && d<=3; }).length;
+  const paidCount = tenants.filter(t=>isPaidThisCycle(t)).length;
+  document.getElementById('summary').innerHTML = `
+    <div class="sum-card"><div class="n">${tenants.length}</div><div class="l">Total tenants</div></div>
+    <div class="sum-card"><div class="n">${overdueCount}</div><div class="l">Overdue</div></div>
+    <div class="sum-card"><div class="n">${dueSoonCount}</div><div class="l">Due within 3 days</div></div>
+    <div class="sum-card"><div class="n">${paidCount}</div><div class="l">Paid this month</div></div>
+  `;
+
+  const historyBox = document.getElementById('historyBox');
+  const sortedPayments = [...payments].sort((a,b)=> new Date(b.paidOn) - new Date(a.paidOn));
+  if(sortedPayments.length === 0){
+    historyBox.innerHTML = '<div class="empty">No payments recorded yet.</div>';
+  } else {
+    historyBox.innerHTML = `<table class="history">
+      <tr><th>Tenant</th><th>Cycle</th><th>Paid on</th><th>Amount</th><th></th></tr>
+      ${sortedPayments.map(p=>{
+        const t = tenants.find(x=>x.id===p.tenantId);
+        const [y,m] = p.month.split('-');
+        const cycleLabel = monthNames[Number(m)-1] + ' ' + y;
+        return `<tr>
+          <td>${t ? escapeHtml(t.name) : '(removed tenant)'}</td>
+          <td>${cycleLabel}</td>
+          <td>${formatDateISO(p.paidOn)}</td>
+          <td>₹${Number(p.amount).toLocaleString('en-IN')}</td>
+          <td><button class="ghost" onclick="showReceipt('${p.id}')">Receipt</button> <button class="ghost" onclick="undoPaid('${p.id}')">Undo</button></td>
+        </tr>`;
+      }).join('')}
+    </table>`;
+  }
+}
+
+document.getElementById('fMessage').value = DEFAULT_TEMPLATE;
+loadData();
+</script>
+</body>
+</html>
