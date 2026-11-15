@@ -21,6 +21,7 @@ erDiagram
     LEDGER ||--|| PAYMENT_COLLECTION : contains_in_data
     LEDGER ||--|| REMINDER_COLLECTION : contains_in_data
     LEDGER ||--|| MONEY_OWED_COLLECTION : contains_in_data
+    LEDGER ||--|| INTEREST_LOAN_COLLECTION : contains_in_data
     LEDGER ||--|| LIABILITY_COLLECTION : contains_in_data
     LEDGER ||--|| SETTINGS : contains_in_data
 
@@ -38,6 +39,10 @@ erDiagram
 
     MONEY_OWED_COLLECTION {
         json moneyOwedToMe "JSON array in data"
+    }
+
+    INTEREST_LOAN_COLLECTION {
+        json interestLoans "JSON array in data"
     }
 
     LIABILITY_COLLECTION {
@@ -62,6 +67,7 @@ erDiagram
   "payments": [],
   "reminders": [],
   "moneyOwedToMe": [],
+  "interestLoans": [],
   "liabilities": [],
   "settings": {
     "issuedBy": "",
@@ -76,6 +82,7 @@ erDiagram
 - **Payment** — `id`, `tenantId`, `tenantName`, `month` (`YYYY-MM`), `paidOn`, `amount`, `rent`, `note`, and `receiptNo`.
 - **Reminder** — `id`, `tenantId`, `month` (`YYYY-MM`), and `sentAt`.
 - **Money owed to me** — `id`, `person`, optional WhatsApp `phone`, `amount`, `expectedDate`, `description`, optional `calculationItems` and resized `calculationPhoto`, and a `payments` array. Each collection records `id`, `amount`, `date`, and optional `note`. Optional reminders are stored on the loan record.
+- **Interest loan** — `id`, `person`, optional WhatsApp `phone`, `principal`, fixed `monthlyAmount`, `startMonth` (the month lent), `lentDate`, `dueDate`, `description`, `payments`, and optional `reminders`. Payments separately record `interestAmount` and `principalAmount`. The fixed amount is due at each calendar month-end from the month lent through the principal due month; if the principal due date occurs before that month's end, the final interest amount is due with the principal. Future interest stops when all principal is returned.
 - **Liability** — `id`, `person`, `amount`, `description`, `frequency` (`once` or `monthly`), and a `payments` array. One-time liabilities store `dueDate`; monthly liabilities store `dueDay`, `startMonth`, and optional `stopMonth`. Each payment stores its date, amount, and applied month. Unpaid scheduled amounts carry forward in reports.
 - **Settings** — `issuedBy` and `seq`, used for receipts.
 
@@ -90,4 +97,4 @@ Fields are stored as JavaScript values from the page; several form values such a
 
 The cloud row should have one row per user, with `user_id` as a primary or unique key and an appropriate foreign key to Supabase Auth. Enable RLS and create policies that limit reads and writes to the authenticated owner (for example, enforce `auth.uid() = user_id` for both visibility and writes). The client-side filter alone does not provide authorization.
 
-All tenant, payment, reminder, loan, and liability records are replaced together when the app syncs the ledger document; there is no per-record cloud synchronization or database-level referential integrity between those JSON records. Older ledgers without the two money-tracking arrays continue to load with empty collections.
+All tenant, payment, reminder, loan, interest-loan, and liability records are replaced together when the app syncs the ledger document; there is no per-record cloud synchronization or database-level referential integrity between those JSON records. Older ledgers without the money-tracking arrays continue to load with empty collections. Previously saved interest loans with a monthly percentage are migrated to an equivalent fixed monthly amount (`principal × monthlyRate ÷ 100`), with existing payments retained.

@@ -285,6 +285,14 @@
   .liability-month-row{display:flex;justify-content:space-between;gap:12px;font-size:12px;padding:5px 0;}
   .liability-month-row strong{font-family:'JetBrains Mono',monospace;white-space:nowrap;}
   .liability-month-total{border-top:1px solid var(--paper-line);margin-top:6px;padding-top:8px;font-weight:600;}
+  .month-edit-list{display:grid;gap:8px;margin:12px 0;}
+  .month-edit-row{display:flex;justify-content:space-between;align-items:center;gap:12px;background:#FAF8F1;border:1px solid var(--paper-line);border-radius:6px;padding:10px;}
+  .month-edit-details{font-size:12px;line-height:1.5;overflow-wrap:anywhere;}
+  .month-edit-details strong{color:var(--green-deep);}
+  .month-edit-actions{display:flex;flex-wrap:wrap;gap:6px;}
+  .month-edit-actions button{min-height:34px;padding:5px 9px;font-size:11px;}
+  .month-edit-actions .danger{color:var(--red-stamp);background:#FFF8F6;border-color:#D9BDB5;}
+  .month-edit-add{margin-top:10px;}
   .developer-card{display:flex;align-items:center;gap:20px;background:#fff;border:1px solid var(--paper-line);border-radius:10px;padding:18px;margin-bottom:18px;box-shadow:var(--shadow);}
   .developer-photo{width:128px;height:128px;object-fit:cover;object-position:center 35%;border-radius:50%;border:3px solid var(--gold-soft);flex:none;}
   .developer-eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--gold);font-weight:600;}
@@ -323,6 +331,8 @@
     .calculation-row button{font-size:10px;padding:5px;}
     .calculation-actions strong{margin-left:0;}
     .tracker-table{min-width:520px;}
+    .month-edit-row{align-items:flex-start;flex-direction:column;}
+    .month-edit-add-button{grid-column:auto;}
     .sum-card{flex:1 1 calc(50% - 8px);min-width:0;padding:12px;}
     .sum-card .n{font-size:20px;}
     .section-head{flex-wrap:wrap;}
@@ -385,6 +395,7 @@
     <button type="button" class="app-tab" id="dashboardTab" role="tab" aria-controls="dashboardView" aria-selected="true" tabindex="0" data-app-tab="dashboardView">Dashboard</button>
     <button type="button" class="app-tab" id="rentTab" role="tab" aria-controls="rentView" aria-selected="false" tabindex="-1" data-app-tab="rentView">Tenants</button>
     <button type="button" class="app-tab" id="moneyTab" role="tab" aria-controls="moneyView" aria-selected="false" tabindex="-1" data-app-tab="moneyView">Money tracker</button>
+    <button type="button" class="app-tab" id="interestTab" role="tab" aria-controls="interestView" aria-selected="false" tabindex="-1" data-app-tab="interestView">Interest loans</button>
     <button type="button" class="app-tab" id="aboutTab" role="tab" aria-controls="aboutView" aria-selected="false" tabindex="-1" data-app-tab="aboutView">About</button>
   </nav>
 
@@ -581,6 +592,49 @@
     </section>
   </div>
 
+  <div id="interestView" class="app-view" role="tabpanel" aria-labelledby="interestTab" hidden>
+    <section>
+      <div class="section-head"><h2>Interest loan tracker</h2><div class="rule"></div></div>
+      <p class="money-intro">Manage money you lend to others for interest separately from tenants and the Money tracker. Enter the fixed monthly amount you expect to collect. It starts in the month the money is lent and is due at month-end, or on the principal due date if earlier. If all principal is returned early, future monthly interest stops.</p>
+      <div id="interestSummary" class="summary"></div>
+      <div class="form-card">
+        <h3>Add an interest loan</h3>
+        <form id="interestLoanForm" class="form-grid money-form">
+          <div class="field">
+            <label for="interestPerson">Person</label>
+            <input id="interestPerson" maxlength="100" required>
+          </div>
+          <div class="field">
+            <label for="interestPrincipal">Principal lent (₹)</label>
+            <input id="interestPrincipal" type="number" min="0.01" step="0.01" required>
+          </div>
+          <div class="field">
+            <label for="interestMonthlyAmount">Monthly interest to collect (₹)</label>
+            <input id="interestMonthlyAmount" type="number" min="0.01" step="0.01" required>
+          </div>
+          <div class="field">
+            <label for="interestStartDate">Date lent</label>
+            <input id="interestStartDate" type="date" required>
+          </div>
+          <div class="field">
+            <label for="interestDueDate">Principal due date</label>
+            <input id="interestDueDate" type="date" required>
+          </div>
+          <div class="field">
+            <label for="interestPhone">WhatsApp number (optional)</label>
+            <input id="interestPhone" type="tel" inputmode="tel" maxlength="20" placeholder="Country code + number">
+          </div>
+          <div class="field full">
+            <label for="interestDescription">Description / reason</label>
+            <textarea id="interestDescription" maxlength="500" required></textarea>
+          </div>
+          <div class="field full"><button type="submit">Add interest loan</button></div>
+        </form>
+      </div>
+      <div id="interestLoanList" class="money-list"></div>
+    </section>
+  </div>
+
   <div id="aboutView" class="app-view" role="tabpanel" aria-labelledby="aboutTab" hidden>
     <section class="developer-card">
       <img class="developer-photo" src="./assets/vaibhav-kumar.jpg" alt="Vaibhav Kumar, developer of Rent Ledger">
@@ -663,6 +717,16 @@
   </div>
   <div class="form-actions"><button class="ghost" onclick="closeOv('payOv')">Cancel</button><button onclick="savePay()">Save &amp; make receipt</button></div>
 </div></div>
+<div class="ov" id="monthEditOv"><div class="box" role="dialog" aria-modal="true" aria-labelledby="monthEditTitle">
+  <h2 id="monthEditTitle">Edit monthly payments</h2>
+  <p class="hint">Correct or remove payment records for this month. Changes update the monthly collection tracker.</p>
+  <div id="monthEditList" class="month-edit-list"></div>
+  <div class="form-grid month-edit-add">
+    <div class="field"><label for="monthEditTenant">Add a payment for</label><select id="monthEditTenant"></select></div>
+    <div class="field month-edit-add-button"><label aria-hidden="true">&nbsp;</label><button type="button" id="addMonthPayment">Record payment for this month</button></div>
+  </div>
+  <div class="form-actions"><button type="button" class="ghost" onclick="closeOv('monthEditOv')">Close</button></div>
+</div></div>
 <div class="ov" id="moneyPaymentOv"><div class="box" role="dialog" aria-modal="true" aria-labelledby="moneyPaymentTitle">
   <h2 id="moneyPaymentTitle">Record payment</h2>
   <div class="hint" id="moneyPaymentHint" style="margin:0 0 12px"></div>
@@ -674,13 +738,24 @@
   </div>
   <div class="form-actions"><button type="button" class="ghost" onclick="closeOv('moneyPaymentOv')">Cancel</button><button type="button" onclick="saveMoneyPayment()">Save payment</button></div>
 </div></div>
+<div class="ov" id="interestPaymentOv"><div class="box" role="dialog" aria-modal="true" aria-labelledby="interestPaymentTitle">
+  <h2 id="interestPaymentTitle">Record interest loan payment</h2>
+  <div class="hint" id="interestPaymentHint" style="margin:0 0 12px"></div>
+  <div class="form-grid">
+    <div class="field"><label for="interestPaymentDate">Date received</label><input id="interestPaymentDate" type="date"></div>
+    <div class="field"><label for="interestPaymentInterest">Interest received (₹)</label><input id="interestPaymentInterest" type="number" min="0" step="0.01"></div>
+    <div class="field"><label for="interestPaymentPrincipal">Principal returned (₹)</label><input id="interestPaymentPrincipal" type="number" min="0" step="0.01"></div>
+    <div class="field full"><label for="interestPaymentNote">Note (optional)</label><input id="interestPaymentNote" maxlength="200"></div>
+  </div>
+  <div class="form-actions"><button type="button" class="ghost" onclick="closeOv('interestPaymentOv')">Cancel</button><button type="button" onclick="saveInterestPayment()">Save payment</button></div>
+</div></div>
 <div class="ov" id="dueNoticeOv"><div class="box" role="dialog" aria-modal="true" aria-labelledby="dueNoticeTitle">
   <h2 id="dueNoticeTitle">Due notice</h2>
   <div id="dueNoticeCard" class="due-notice-card"></div>
   <div class="form-actions noprint">
     <button type="button" class="ghost" onclick="closeOv('dueNoticeOv')">Close</button>
     <button type="button" class="ghost" onclick="window.print()">Print / save PDF</button>
-    <button type="button" onclick="sendDueNotice()">Send reminder on WhatsApp</button>
+    <button type="button" id="dueNoticeSend" onclick="sendDueNotice()">Send reminder on WhatsApp</button>
   </div>
 </div></div>
 <div class="ov" id="backupShareOv"><div class="box" role="dialog" aria-modal="true" aria-labelledby="backupShareTitle">
@@ -718,12 +793,28 @@ let payments = [];
 let settings = {issuedBy:'', seq:0};
 let reminders = [];
 let moneyOwedToMe = [];
+let interestLoans = [];
 let liabilities = [];
 let editingId = null;
 
 const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
 function monthKey(y,m){ return y + '-' + String(m+1).padStart(2,'0'); }
+
+function normalizeInterestLoans(records){
+  if(!Array.isArray(records)) return [];
+  return records.filter(record=>record && typeof record==='object').map(record=>{
+    const monthlyAmount=Number(record.monthlyAmount);
+    if(Number.isFinite(monthlyAmount) && monthlyAmount>=0){
+      record.monthlyAmount=monthlyAmount;
+    }else{
+      record.monthlyAmount=(Number(record.principal)||0)*(Number(record.monthlyRate)||0)/100;
+    }
+    if(!validMonthKey(record.startMonth)) record.startMonth=dateMonthKey(record.lentDate);
+    delete record.monthlyRate;
+    return record;
+  });
+}
 
 function loadData(){
   try{
@@ -734,16 +825,17 @@ function loadData(){
       payments = parsed.payments || [];
       reminders = parsed.reminders || [];
       moneyOwedToMe = Array.isArray(parsed.moneyOwedToMe) ? parsed.moneyOwedToMe : [];
+      interestLoans = normalizeInterestLoans(parsed.interestLoans);
       liabilities = Array.isArray(parsed.liabilities) ? parsed.liabilities : [];
       settings = parsed.settings || settings;
     }
-  }catch(e){ tenants = []; payments = []; reminders = []; moneyOwedToMe = []; liabilities = []; }
+  }catch(e){ tenants = []; payments = []; reminders = []; moneyOwedToMe = []; interestLoans = []; liabilities = []; }
   cleanupOldPayments();
   render();
 }
 
 function saveData(){
-  localStorage.setItem(STORE_KEY, JSON.stringify({tenants, payments, reminders, moneyOwedToMe, liabilities, settings}));
+  localStorage.setItem(STORE_KEY, JSON.stringify({tenants, payments, reminders, moneyOwedToMe, interestLoans, liabilities, settings}));
   localStorage.setItem(STORE_KEY + '.ts', new Date().toISOString());
   cloudPush();
 }
@@ -843,24 +935,53 @@ function deleteTenant(id){
   render();
 }
 
+function tenantHistoryStartMonth(tenant){
+  const tenancyDate=[tenant.since,tenant.agrStart].find(validDateKey);
+  if(tenancyDate) return dateMonthKey(tenancyDate);
+  const firstPayment=payments.filter(payment=>payment.tenantId===tenant.id && validMonthKey(payment.month))
+    .map(payment=>payment.month).sort()[0];
+  return firstPayment || currentCycleKey();
+}
+function tenantRentBalanceEntries(tenant,throughMonth){
+  const endMonth=validMonthKey(throughMonth)?throughMonth:currentCycleKey();
+  const startOrdinal=monthOrdinal(tenantHistoryStartMonth(tenant));
+  const endOrdinal=monthOrdinal(endMonth);
+  if(startOrdinal<0 || endOrdinal<startOrdinal) return [];
+  const entries=[];
+  for(let ordinal=startOrdinal;ordinal<=endOrdinal;ordinal++){
+    const month=monthKey(Math.floor(ordinal/12),ordinal%12);
+    entries.push({month,rent:rentFor(tenant,month),received:paidSum(tenant,month),balance:balFor(tenant,month),dueDate:tenantDueDateForMonth(tenant,month)});
+  }
+  return entries;
+}
+function tenantTotalBalance(tenant,throughMonth){
+  return tenantRentBalanceEntries(tenant,throughMonth).reduce((total,entry)=>total+entry.balance,0);
+}
+function monthAsOfDate(month){
+  if(!validMonthKey(month) || month>=currentCycleKey()) return todayDateKey();
+  const [year,number]=month.split('-').map(Number);
+  return month+'-'+String(lastDayOf(year,number-1)).padStart(2,'0');
+}
+function tenantOverdueEntries(tenant,throughMonth,asOfDate){
+  const referenceDate=validDateKey(asOfDate)?asOfDate:todayDateKey();
+  return tenantRentBalanceEntries(tenant,throughMonth).filter(entry=>entry.balance>0 && entry.dueDate<referenceDate);
+}
 function rentDueStatement(t,month){
-  const rent=rentFor(t,month), received=paidSum(t,month), balance=balFor(t,month);
-  const dueDate=tenantDueDateForMonth(t,month);
+  const overdue=tenantRentBalanceEntries(t,month).filter(entry=>entry.balance>0);
+  const total=overdue.reduce((sum,entry)=>sum+entry.balance,0);
   return ['*Rent Due Receipt*',
     'Property: '+PROPERTY_NAME,
     'Tenant: '+t.name,
-    'For: '+monthLabel(month),
-    'Monthly rent: '+rs(rent),
-    'Received: '+rs(received),
-    'Balance due: '+rs(balance),
-    'Due date: '+(dueDate?displayDateKey(dueDate):'Not set')].join('\n');
+    'Statement through: '+monthLabel(month),
+    ...(overdue.length?overdue.map(entry=>monthLabel(entry.month)+': rent '+rs(entry.rent)+', received '+rs(entry.received)+', balance '+rs(entry.balance)+', due '+displayDateKey(entry.dueDate)):['No rent balance outstanding.']),
+    'Total balance due: '+rs(total)].join('\n');
 }
 function buildMessage(t,month){
   const selectedMonth=validMonthKey(month)?month:currentCycleKey();
   const dueDate=tenantDueDateForMonth(t,selectedMonth);
   const greeting=t.message
     .replaceAll('{name}', t.name)
-    .replaceAll('{amount}', balanceOf(t,selectedMonth).toLocaleString('en-IN'))
+    .replaceAll('{amount}', tenantTotalBalance(t,selectedMonth).toLocaleString('en-IN'))
     .replaceAll('{dueDate}', dueDate?displayDateKey(dueDate):'');
   return greeting+'\n\n'+rentDueStatement(t,selectedMonth)+'\n\nThank you.';
 }
@@ -885,14 +1006,33 @@ function sendReminder(id,month){
 let payFor = null, rcPid = null;
 function closeOv(id){ document.getElementById(id).classList.remove('open'); }
 let editId = null;
-function openPay(id, eid, past){
+let monthEditKey = '';
+function openMonthEdit(month){
+  if(!validMonthKey(month)) return;
+  monthEditKey=month;
+  document.getElementById('monthEditTitle').textContent='Edit payments · '+monthLabel(month);
+  document.getElementById('monthEditTenant').innerHTML='<option value="">Select a tenant…</option>'+tenants.map(tenant=>`<option value="${escapeHtml(tenant.id)}">${escapeHtml(tenant.name)}</option>`).join('');
+  renderMonthEdit();
+  document.getElementById('monthEditOv').classList.add('open');
+}
+function renderMonthEdit(){
+  const records=payments.filter(payment=>payment.month===monthEditKey).slice().sort((a,b)=>new Date(b.paidOn)-new Date(a.paidOn));
+  document.getElementById('monthEditList').innerHTML=records.length?records.map(payment=>{
+    const tenant=tenants.find(item=>item.id===payment.tenantId);
+    return `<div class="month-edit-row">
+      <div class="month-edit-details"><strong>${escapeHtml(tenant?tenant.name:payment.tenantName||'Removed tenant')}</strong><br>${formatDateISO(payment.paidOn)} · ${rs(payment.amount)}${payment.note?' · '+escapeHtml(payment.note):''}${payment.receiptNo?' · '+escapeHtml(payment.receiptNo):''}</div>
+      <div class="month-edit-actions"><button type="button" class="ghost" data-month-payment-action="edit" data-payment-id="${escapeHtml(payment.id)}">Edit</button><button type="button" class="ghost danger" data-month-payment-action="delete" data-payment-id="${escapeHtml(payment.id)}">Delete</button></div>
+    </div>`;
+  }).join(''):'<div class="empty-state">No payments have been recorded for this month yet.</div>';
+}
+function openPay(id, eid, past, monthOverride){
   const t = tenants.find(x=>x.id===id); if(!t) return;
   payFor = id; editId = eid || null;
   const p = editId && payments.find(x=>x.id===editId);
   const f = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
   const [cy,cm] = currentCycleKey().split('-').map(Number);
   const pd = p ? new Date(p.paidOn) : new Date();
-  const pm = p ? p.month : past ? f(new Date(cy, cm-2, 1)) : currentCycleKey();
+  const pm = p ? p.month : validMonthKey(monthOverride) ? monthOverride : past ? f(new Date(cy, cm-2, 1)) : currentCycleKey();
   document.getElementById('payMonth').value = pm;
   document.getElementById('payDate').value = f(pd)+'-'+String(pd.getDate()).padStart(2,'0');
   document.getElementById('payNote').value = p ? (p.note||'') : '';
@@ -922,10 +1062,12 @@ function savePay(){
   const note = document.getElementById('payNote').value.trim();
   if(editId){
     Object.assign(payments.find(x=>x.id===editId), {amount: amt, paidOn: when, month: mk, note});
+    document.getElementById('dashboardMonth').value = mk;
     saveData(); closeOv('payOv'); render(); return;
   }
   const rec = {id: 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2,6), tenantId: t.id, tenantName: t.name,
     month: mk, paidOn: when, amount: amt, rent: rentFor(t,mk), note, receiptNo: nextNo()};
+  document.getElementById('dashboardMonth').value = mk;
   payments.push(rec); saveData(); closeOv('payOv'); render(); showReceipt(rec.id);
 }
 function rcFigures(p){
@@ -971,6 +1113,8 @@ function rcWa(){
 }
 
 function undoPaid(paymentId){
+  const payment=payments.find(item=>item.id===paymentId);
+  if(payment && validMonthKey(payment.month)) document.getElementById('dashboardMonth').value=payment.month;
   payments = payments.filter(p=>p.id!==paymentId);
   saveData();
   render();
@@ -1005,12 +1149,101 @@ document.getElementById('saveTenant').addEventListener('click', ()=>{
 
 document.getElementById('cancelEdit').addEventListener('click', resetForm);
 
+document.getElementById('monthEditList').addEventListener('click',event=>{
+  const button=event.target instanceof Element?event.target.closest('button[data-month-payment-action]'):null;
+  if(!button) return;
+  const payment=payments.find(item=>item.id===button.dataset.paymentId);
+  if(!payment) return;
+  if(button.dataset.monthPaymentAction==='edit'){
+    closeOv('monthEditOv');
+    openPay(payment.tenantId,payment.id,false,payment.month);
+    return;
+  }
+  if(button.dataset.monthPaymentAction==='delete' && confirm('Delete this payment record? The monthly received and balance totals will be recalculated.')){
+    const month=payment.month;
+    payments=payments.filter(item=>item.id!==payment.id);
+    document.getElementById('dashboardMonth').value=month;
+    saveData();
+    render();
+    openMonthEdit(month);
+  }
+});
+document.getElementById('addMonthPayment').addEventListener('click',()=>{
+  const tenantId=document.getElementById('monthEditTenant').value;
+  if(!tenantId){ alert('Select a tenant first.'); return; }
+  const month=monthEditKey;
+  closeOv('monthEditOv');
+  openPay(tenantId,null,false,month);
+});
+let interestPaymentTarget=null;
+function openInterestPayment(id){
+  const record=interestLoans.find(item=>item.id===id);
+  if(!record) return;
+  interestPaymentTarget=id;
+  document.getElementById('interestPaymentTitle').textContent='Record payment · '+record.person;
+  document.getElementById('interestPaymentDate').value=todayDateKey();
+  document.getElementById('interestPaymentInterest').value='';
+  document.getElementById('interestPaymentPrincipal').value='';
+  document.getElementById('interestPaymentNote').value='';
+  updateInterestPaymentHint();
+  document.getElementById('interestPaymentOv').classList.add('open');
+  document.getElementById('interestPaymentInterest').focus();
+}
+function updateInterestPaymentHint(){
+  if(!interestPaymentTarget) return;
+  const record=interestLoans.find(item=>item.id===interestPaymentTarget);
+  const date=document.getElementById('interestPaymentDate').value;
+  if(!record || !validDateKey(date)) return;
+  document.getElementById('interestPaymentHint').textContent='Interest due through this date: '+rs(interestOutstandingThrough(record,date))+'. Principal remaining on this date: '+rs(interestPrincipalOutstandingThrough(record,date))+'. Enter the two portions separately.';
+}
+function saveInterestPayment(){
+  const record=interestLoans.find(item=>item.id===interestPaymentTarget);
+  if(!record) return;
+  const date=document.getElementById('interestPaymentDate').value;
+  const interestAmount=Number(document.getElementById('interestPaymentInterest').value)||0;
+  const principalAmount=Number(document.getElementById('interestPaymentPrincipal').value)||0;
+  const note=document.getElementById('interestPaymentNote').value.trim();
+  if(!validDateKey(date) || interestAmount<0 || principalAmount<0 || !(interestAmount>0 || principalAmount>0)){
+    alert('Enter a valid date and an interest amount, principal amount, or both.');
+    return;
+  }
+  const interestOutstanding=interestOutstandingThrough(record,date);
+  if(interestAmount>interestOutstanding){
+    alert('Interest received cannot exceed the interest due by that date: '+rs(interestOutstanding)+'.');
+    return;
+  }
+  const principalOutstanding=interestPrincipalOutstandingThrough(record,date);
+  if(principalAmount>principalOutstanding){
+    alert('Principal returned cannot exceed the principal remaining on that date: '+rs(principalOutstanding)+'.');
+    return;
+  }
+  if(!Array.isArray(record.payments)) record.payments=[];
+  record.payments.push({id:moneyId('ip'),date,interestAmount,principalAmount,note});
+  interestPaymentTarget=null;
+  closeOv('interestPaymentOv');
+  saveData();
+  render();
+}
+document.getElementById('interestPaymentDate').addEventListener('change',updateInterestPaymentHint);
+document.getElementById('interestLoanList').addEventListener('click',event=>{
+  const button=event.target instanceof Element?event.target.closest('button[data-interest-action]'):null;
+  if(!button) return;
+  const id=button.dataset.interestId;
+  if(button.dataset.interestAction==='notice') openInterestDueNotice(id);
+  if(button.dataset.interestAction==='payment') openInterestPayment(id);
+  if(button.dataset.interestAction==='delete' && confirm('Delete this interest loan and its payment history?')){
+    interestLoans=interestLoans.filter(record=>record.id!==id);
+    saveData();
+    render();
+  }
+});
+
 document.getElementById('exportLink').addEventListener('click', ()=>{
   const file = createBackupFile();
   downloadBackup(file);
 });
 function createBackupFile(){
-  const contents=JSON.stringify({tenants,payments,reminders,moneyOwedToMe,liabilities,settings},null,2);
+  const contents=JSON.stringify({tenants,payments,reminders,moneyOwedToMe,interestLoans,liabilities,settings},null,2);
   const name='rent-ledger-backup-'+currentCycleKey()+'.json';
   return typeof File==='undefined' ? Object.assign(new Blob([contents],{type:'application/json'}),{name}) : new File([contents],name,{type:'application/json'});
 }
@@ -1066,6 +1299,7 @@ document.getElementById('importFile').addEventListener('change', (e)=>{
       payments = parsed.payments || [];
       reminders = parsed.reminders || [];
       moneyOwedToMe = Array.isArray(parsed.moneyOwedToMe) ? parsed.moneyOwedToMe : [];
+      interestLoans = normalizeInterestLoans(parsed.interestLoans);
       liabilities = Array.isArray(parsed.liabilities) ? parsed.liabilities : [];
       settings = parsed.settings || settings;
       cleanupOldPayments();
@@ -1213,6 +1447,26 @@ document.getElementById('moneyOwedForm').addEventListener('submit',event=>{
   saveData();
   render();
 });
+document.getElementById('interestLoanForm').addEventListener('submit',event=>{
+  event.preventDefault();
+  const person=document.getElementById('interestPerson').value.trim();
+  const principal=Number(document.getElementById('interestPrincipal').value);
+  const monthlyAmount=Number(document.getElementById('interestMonthlyAmount').value);
+  const lentDate=document.getElementById('interestStartDate').value;
+  const dueDate=document.getElementById('interestDueDate').value;
+  const phone=document.getElementById('interestPhone').value.replace(/[^0-9]/g,'');
+  const description=document.getElementById('interestDescription').value.trim();
+  if(!person || !(principal>0) || !(monthlyAmount>0) || !validDateKey(lentDate) || !validDateKey(dueDate) || !description){
+    alert('Enter the person, principal, monthly interest amount, lending date, principal due date, and description.');
+    return;
+  }
+  if(dueDate<lentDate){ alert('The principal due date cannot be before the lending date.'); return; }
+  if(phone && (phone.length<7 || phone.length>15)){ alert('Enter a valid WhatsApp number, including its country code, or leave it blank.'); return; }
+  interestLoans.push({id:moneyId('interest'),person,principal,monthlyAmount,startMonth:dateMonthKey(lentDate),lentDate,dueDate,phone,description,createdAt:new Date().toISOString(),payments:[],reminders:[]});
+  document.getElementById('interestLoanForm').reset();
+  saveData();
+  render();
+});
 document.getElementById('liabilityForm').addEventListener('submit',event=>{
   event.preventDefault();
   const person=document.getElementById('liabilityPerson').value.trim();
@@ -1338,6 +1592,7 @@ function activateAppTab(viewId,focus){
   });
   document.querySelectorAll('.app-view').forEach(view=>{ view.hidden=view.id!==viewId; });
   if(viewId==='moneyView') renderMoneyTracker();
+  if(viewId==='interestView') renderInterestLoans();
   if(viewId==='dashboardView') renderDashboard();
 }
 
@@ -1356,22 +1611,40 @@ function render(){
     list.innerHTML = '<div class="empty">No tenants yet. Add one below to start sending reminders.</div>';
   } else {
     const sm = document.getElementById('sortBy').value;
-    const od = t => (!isPaidThisCycle(t) && daysUntil(currentCycleDueDate(t))<0) ? 0 : 1;
-    const byDue = (a,b)=> currentCycleDueDate(a) - currentCycleDueDate(b);
-    const sorted = [...tenants].sort(sm==='name' ? (a,b)=>a.name.localeCompare(b.name) : sm==='bal' ? (a,b)=>balanceOf(b)-balanceOf(a) : sm==='over' ? (a,b)=>od(a)-od(b)||byDue(a,b) : byDue);
+    const balanceEntries=new Map(tenants.map(tenant=>[tenant,tenantRentBalanceEntries(tenant,currentCycleKey())]));
+    const totalDue=tenant=>(balanceEntries.get(tenant)||[]).reduce((sum,entry)=>sum+entry.balance,0);
+    const overdue=tenant=>(balanceEntries.get(tenant)||[]).some(entry=>entry.balance>0 && entry.dueDate<todayDateKey());
+    const firstDue=tenant=>{const entry=(balanceEntries.get(tenant)||[]).find(item=>item.balance>0);return entry?entry.dueDate:'9999-12-31';};
+    const paidLast=(a,b)=>Number(totalDue(a)===0)-Number(totalDue(b)===0);
+    const byDue=(a,b)=>firstDue(a).localeCompare(firstDue(b));
+    const sorted = [...tenants].sort((a,b)=>{
+      const paidOrder=paidLast(a,b);
+      if(paidOrder) return paidOrder;
+      if(sm==='name') return a.name.localeCompare(b.name);
+      if(sm==='bal') return totalDue(b)-totalDue(a)||byDue(a,b);
+      if(sm==='over') return Number(!overdue(a))-Number(!overdue(b))||byDue(a,b);
+      return byDue(a,b);
+    });
     list.innerHTML = sorted.map(t=>{
       const due = currentCycleDueDate(t);
       const d = daysUntil(due);
       const paidRecord = isPaidThisCycle(t) ? cyclePays(t).slice(-1)[0] : null;
-      const bal = balanceOf(t), ps = paidSum(t), part = ps > 0 && bal > 0;
+      const entries=balanceEntries.get(t)||[];
+      const currentEntry=entries.find(entry=>entry.month===currentCycleKey());
+      const currentBalance=currentEntry?currentEntry.balance:0;
+      const totalBalance=entries.reduce((sum,entry)=>sum+entry.balance,0);
+      const pastBalance=entries.filter(entry=>entry.month<currentCycleKey()).reduce((sum,entry)=>sum+entry.balance,0);
+      const ps = paidSum(t), part = ps > 0 && currentBalance > 0;
+      const overdueEntry=entries.find(entry=>entry.balance>0 && entry.dueDate<todayDateKey());
       let rowClass = 'tenant-row';
       let statusClass = 'ok';
       let statusText = 'Due in ' + d + ' days · ' + formatDate(due);
       if(d===0) statusText = 'Due today · ' + formatDate(due);
-      if(d < 0){ rowClass += ' overdue'; statusClass = 'overdue'; statusText = 'Overdue by ' + Math.abs(d) + ' days'; }
-      else if(d <= 3){ statusClass = 'due-soon'; }
-      if(paidRecord){ rowClass += ' paid'; statusClass = 'paid'; statusText = 'Paid in full · ' + formatDateISO(paidRecord.paidOn); }
-      else if(part){ statusText = 'Part-paid · ' + statusText; }
+      if(overdueEntry){ rowClass += ' overdue'; statusClass = 'overdue'; statusText = 'Overdue from ' + monthLabel(overdueEntry.month) + ' · total due ' + rs(totalBalance); }
+      else if(d < 0 && currentBalance>0){ rowClass += ' overdue'; statusClass = 'overdue'; statusText = 'Overdue by ' + Math.abs(d) + ' days · total due ' + rs(totalBalance); }
+      else if(d <= 3 && currentBalance>0){ statusClass = 'due-soon'; }
+      if(totalBalance===0 && paidRecord){ rowClass += ' paid'; statusClass = 'paid'; statusText = 'Paid through ' + monthLabel(currentCycleKey()) + ' · ' + formatDateISO(paidRecord.paidOn); }
+      else if(part && !overdueEntry){ statusText = 'Part-paid · ' + statusText; }
 
       const rems = remindersThisCycle(t);
       const reminderHtml = rems.length
@@ -1379,7 +1652,7 @@ function render(){
         : `<div class="t-reminder"><span class="none">No reminder sent this month</span></div>`;
 
       const actions = paidRecord
-        ? `<button class="ghost" onclick="showReceipt('${paidRecord.id}')">Receipt</button><button class="ghost" onclick="undoPaid('${paidRecord.id}')">Undo last</button>`
+        ? `<button class="ghost" onclick="showReceipt('${paidRecord.id}')">Receipt</button>${totalBalance>0?`<button class="ghost" onclick="sendReminder('${t.id}')">Due reminder</button>`:''}<button class="ghost" onclick="undoPaid('${paidRecord.id}')">Undo last</button>`
         : `<button onclick="sendReminder('${t.id}')">${rems.length ? 'Remind again' : 'Send reminder'}</button>
            <button class="gold" onclick="openPay('${t.id}')">Record payment</button>`;
 
@@ -1391,9 +1664,9 @@ function render(){
           ${ps ? '<div class="t-small">Received: ' + cyclePays(t).map(q=>rs(q.amount)+' on '+formatDateISO(q.paidOn).slice(0,-5)).join(' · ') + '</div>' : ''}
           ${reminderHtml}
         </div>
-        <div class="t-amount">${part ? rs(bal) + '<small class="t-small">left of ' + rs(t.amount) + '</small>' : rs(t.amount)}</div>
+        <div class="t-amount">${totalBalance>0?rs(totalBalance)+'<small class="t-small">total due · this month '+rs(currentBalance)+(pastBalance>0?' · past due '+rs(pastBalance):'')+'</small>':rs(t.amount)+'<small class="t-small">'+(paidRecord?'Paid this month':'No balance due')+'</small>'}</div>
         <div class="t-status ${statusClass}">${statusText}</div>
-        ${paidRecord ? '<div class="stamp">Paid</div>' : ''}
+        ${paidRecord && totalBalance===0 ? '<div class="stamp">Paid</div>' : ''}
         <div class="t-actions">
           <div class="row">${actions}<button class="ghost" onclick="openPay('${t.id}',null,true)">+ Past month</button></div>
           <div class="row">
@@ -1408,8 +1681,8 @@ function render(){
   const curKey = currentCycleKey();
   const rn = tenants.filter(t=>{ const i = agrInfo(t); return i && i.dr <= 30; });
   document.getElementById('renewBox').innerHTML = rn.length ? '<div class="renew"><b>Agreement renewal &amp; rent increase</b><br>' + rn.map(t=>{ const i = agrInfo(t); return escapeHtml(t.name) + ' — ' + (i.dr<=0 ? '11 months done' : 'reminder in ' + i.dr + ' days') + ', agreement ends ' + formatDate(i.e); }).join('<br>') + '</div>' : '';
-  const overdueCount = tenants.filter(t=> !isPaidThisCycle(t) && daysUntil(currentCycleDueDate(t))<0).length;
-  const dueSoonCount = tenants.filter(t=>{ if(isPaidThisCycle(t)) return false; const d=daysUntil(currentCycleDueDate(t)); return d>=0 && d<=3; }).length;
+  const overdueCount = tenants.filter(t=>tenantOverdueEntries(t,currentCycleKey()).length>0).length;
+  const dueSoonCount = tenants.filter(t=>{ if(tenantTotalBalance(t,currentCycleKey())===0 || tenantOverdueEntries(t,currentCycleKey()).length) return false; const d=daysUntil(currentCycleDueDate(t)); return d>=0 && d<=3; }).length;
   const paidCount = tenants.filter(t=>isPaidThisCycle(t)).length;
   document.getElementById('summary').innerHTML = `
     <div class="sum-card"><div class="n">${tenants.length}</div><div class="l">Total tenants</div></div>
@@ -1418,16 +1691,18 @@ function render(){
     <div class="sum-card"><div class="n">${paidCount}</div><div class="l">Paid this month</div></div>
   `;
 
-  const mks = [...new Set([...payments.map(q=>q.month), curKey])].sort().reverse();
+  const monthSet=new Set([...payments.map(payment=>payment.month),curKey]);
+  tenants.forEach(tenant=>tenantRentBalanceEntries(tenant,curKey).forEach(entry=>monthSet.add(entry.month)));
+  const mks = [...monthSet].filter(validMonthKey).sort().reverse();
   let tR = 0, tB = 0;
   const mrows = mks.map(k=>{
     const rec = payments.filter(q=>q.month===k).reduce((a,q)=>a+Number(q.amount),0);
     let bak = 0; const who = [];
-    tenants.forEach(t=>{ const b = balFor(t,k); if(b>0){ bak += b; who.push(escapeHtml(t.name) + ' ' + rs(b)); } });
+    tenants.forEach(t=>{ const entry=tenantRentBalanceEntries(t,k).find(item=>item.month===k); const b=entry?entry.balance:0; if(b>0){ bak += b; who.push(escapeHtml(t.name) + ' ' + rs(b)); } });
     tR += rec; tB += bak;
-    return `<tr><td>${ml(k)}</td><td>${rs(rec)}</td><td class="${bak?'red':''}">${rs(bak)}</td><td class="${bak?'red':''}">${who.join(', ') || 'All paid'}</td></tr>`;
+    return `<tr><td>${ml(k)}</td><td>${rs(rec)}</td><td class="${bak?'red':''}">${rs(bak)}</td><td class="${bak?'red':''}">${who.join(', ') || 'All paid'}</td><td><button class="ghost" onclick="openMonthEdit('${k}')">Edit</button></td></tr>`;
   }).join('');
-  document.getElementById('monthBox').innerHTML = `<table class="history"><tr><th>Month</th><th>Received</th><th>Baki</th><th>Pending from</th></tr>${mrows}<tr><td><b>Total</b></td><td><b>${rs(tR)}</b></td><td class="${tB?'red':''}"><b>${rs(tB)}</b></td><td></td></tr></table>`;
+  document.getElementById('monthBox').innerHTML = `<table class="history"><tr><th>Month</th><th>Received</th><th>Baki</th><th>Pending from</th><th></th></tr>${mrows}<tr><td><b>Total</b></td><td><b>${rs(tR)}</b></td><td class="${tB?'red':''}"><b>${rs(tB)}</b></td><td></td><td></td></tr></table>`;
 
   const historyBox = document.getElementById('historyBox');
   const sortedPayments = [...payments].sort((a,b)=> new Date(b.paidOn) - new Date(a.paidOn));
@@ -1452,6 +1727,7 @@ function render(){
   }
   renderDashboard();
   renderMoneyTracker();
+  renderInterestLoans();
 }
 
 function moneyTotalPaid(record){
@@ -1565,11 +1841,77 @@ function monthLabel(month){
 function recordPayments(record){
   return record && Array.isArray(record.payments) ? record.payments : [];
 }
+function interestPaymentRecords(record){
+  return record && Array.isArray(record.payments) ? record.payments : [];
+}
+function interestMonthlyAmount(record){
+  return Math.max(0,Number(record.monthlyAmount)||0);
+}
+function principalPaidOffDate(record){
+  const principal=Number(record.principal)||0;
+  if(!(principal>0)) return '';
+  let returned=0;
+  const payments=interestPaymentRecords(record).filter(payment=>validDateKey(payment.date)).slice().sort((a,b)=>a.date.localeCompare(b.date));
+  for(const payment of payments){
+    returned+=Number(payment.principalAmount)||0;
+    if(returned>=principal) return payment.date;
+  }
+  return '';
+}
+function interestDueThrough(record,asOfDate){
+  const startDate=record && record.lentDate;
+  const targetDate=validDateKey(asOfDate)?asOfDate:todayDateKey();
+  const dueDate=record && validDateKey(record.dueDate)?record.dueDate:'';
+  const startMonth=validMonthKey(record && record.startMonth)?record.startMonth:dateMonthKey(startDate);
+  if(!validDateKey(startDate)) return 0;
+  if(targetDate<startDate || !validMonthKey(startMonth)) return 0;
+  const payoffDate=principalPaidOffDate(record);
+  let endDate=dueDate && dueDate<targetDate?dueDate:targetDate;
+  if(payoffDate && payoffDate<endDate) endDate=payoffDate;
+  if(endDate<startDate) return 0;
+  const firstMonth=monthOrdinal(startMonth);
+  const lastMonth=monthOrdinal(dateMonthKey(endDate));
+  if(firstMonth<0 || lastMonth<firstMonth) return 0;
+  const monthlyAmount=interestMonthlyAmount(record);
+  let total=0;
+  for(let ordinal=firstMonth;ordinal<=lastMonth;ordinal++){
+    const year=Math.floor(ordinal/12);
+    const month=ordinal%12;
+    const monthEnd=year+'-'+String(month+1).padStart(2,'0')+'-'+String(lastDayOf(year,month)).padStart(2,'0');
+    const periodDueDate=dueDate && dueDate<monthEnd?dueDate:monthEnd;
+    if(periodDueDate<=endDate) total+=monthlyAmount;
+  }
+  return Math.round(total*100)/100;
+}
+function interestPaidThrough(record,asOfDate){
+  if(!validDateKey(asOfDate)) return 0;
+  return interestPaymentRecords(record).reduce((total,payment)=>{
+    return validDateKey(payment.date) && payment.date<=asOfDate ? total+(Number(payment.interestAmount)||0) : total;
+  },0);
+}
+function principalReturnedThrough(record,asOfDate){
+  if(!validDateKey(asOfDate)) return 0;
+  return interestPaymentRecords(record).reduce((total,payment)=>{
+    return validDateKey(payment.date) && payment.date<=asOfDate ? total+(Number(payment.principalAmount)||0) : total;
+  },0);
+}
+function interestOutstandingThrough(record,asOfDate){
+  return Math.max(0,interestDueThrough(record,asOfDate)-interestPaidThrough(record,asOfDate));
+}
+function interestPrincipalOutstandingThrough(record,asOfDate){
+  return Math.max(0,(Number(record.principal)||0)-principalReturnedThrough(record,asOfDate));
+}
 function paymentHistoryHtml(record){
   const history = recordPayments(record).slice().sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
   if(!history.length) return '';
   return `<details class="money-history"><summary>Payment history (${history.length})</summary>${history.map(payment=>`
     <div class="money-history-item"><span>${displayDateKey(payment.date)}${payment.month ? ' · ' + escapeHtml(monthLabel(payment.month)) : ''}${payment.note ? ' · ' + escapeHtml(payment.note) : ''}</span><strong>${rs(payment.amount)}</strong></div>`).join('')}</details>`;
+}
+function interestPaymentHistoryHtml(record){
+  const history=interestPaymentRecords(record).slice().sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+  if(!history.length) return '';
+  return `<details class="money-history"><summary>Payment history (${history.length})</summary>${history.map(payment=>`
+    <div class="money-history-item"><span>${displayDateKey(payment.date)}${payment.note?' · '+escapeHtml(payment.note):''}</span><strong>Interest ${rs(payment.interestAmount||0)} · Principal ${rs(payment.principalAmount||0)}</strong></div>`).join('')}</details>`;
 }
 function calculationHtml(record){
   const items = Array.isArray(record.calculationItems) ? record.calculationItems.filter(item=>item && typeof item==='object' && Number(item.amount)>0) : [];
@@ -1619,6 +1961,48 @@ function renderMoneyTracker(){
   }).join('') : '<div class="empty-state">No liabilities have been added.</div>';
   renderLiabilityMonth();
 }
+function renderInterestLoans(){
+  const list=document.getElementById('interestLoanList');
+  const summary=document.getElementById('interestSummary');
+  if(!list || !summary) return;
+  const asOfDate=todayDateKey();
+  const records=[...interestLoans].filter(record=>record && typeof record==='object').sort((a,b)=>{
+    const aOutstanding=interestOutstandingThrough(a,asOfDate)+interestPrincipalOutstandingThrough(a,asOfDate);
+    const bOutstanding=interestOutstandingThrough(b,asOfDate)+interestPrincipalOutstandingThrough(b,asOfDate);
+    return bOutstanding-aOutstanding || String(a.dueDate||'').localeCompare(String(b.dueDate||''));
+  });
+  const currentMonth=currentCycleKey();
+  const monthlyExpected=records.reduce((total,record)=>{
+    const startMonth=validMonthKey(record.startMonth)?record.startMonth:dateMonthKey(record.lentDate);
+    const dueMonth=dateMonthKey(record.dueDate);
+    const active=interestPrincipalOutstandingThrough(record,asOfDate)>0 && monthOrdinal(currentMonth)>=monthOrdinal(startMonth) && monthOrdinal(currentMonth)<=monthOrdinal(dueMonth);
+    return total+(active?interestMonthlyAmount(record):0);
+  },0);
+  const interestOutstanding=records.reduce((total,record)=>total+interestOutstandingThrough(record,asOfDate),0);
+  const principalOutstanding=records.reduce((total,record)=>total+interestPrincipalOutstandingThrough(record,asOfDate),0);
+  summary.innerHTML=`<div class="sum-card"><div class="n">${records.length}</div><div class="l">Interest loans</div></div>
+    <div class="sum-card"><div class="n">${rs(monthlyExpected)}</div><div class="l">Monthly amount to collect</div></div>
+    <div class="sum-card"><div class="n">${rs(interestOutstanding)}</div><div class="l">Interest due</div></div>
+    <div class="sum-card"><div class="n">${rs(principalOutstanding)}</div><div class="l">Principal outstanding</div></div>`;
+  list.innerHTML=records.length?records.map(record=>{
+    const interestDue=interestDueThrough(record,asOfDate);
+    const interestPaid=interestPaidThrough(record,asOfDate);
+    const interestOutstanding=Math.max(0,interestDue-interestPaid);
+    const principalOutstanding=interestPrincipalOutstandingThrough(record,asOfDate);
+    const overduePrincipal=principalOutstanding>0 && validDateKey(record.dueDate) && record.dueDate<asOfDate;
+    const status=overduePrincipal?'Principal overdue':interestOutstanding>0?'Interest due':principalOutstanding===0?'Settled':'Principal due '+displayDateKey(record.dueDate);
+    return `<article class="money-entry${overduePrincipal?' overdue':''}${interestOutstanding===0&&principalOutstanding===0?' closed':''}">
+      <div class="money-entry-head"><div class="money-entry-title">${escapeHtml(record.person||'Unnamed person')}</div><div class="money-entry-amount">${rs(interestOutstanding+principalOutstanding)} outstanding</div></div>
+      <div class="money-entry-meta">Original principal ${rs(record.principal)} · Monthly interest ${rs(interestMonthlyAmount(record))} · Starts ${monthLabel(validMonthKey(record.startMonth)?record.startMonth:dateMonthKey(record.lentDate))} · Principal due ${displayDateKey(record.dueDate)}${overduePrincipal?' · Overdue':''}</div>
+      <div class="money-entry-description">${escapeHtml(record.description||'')}</div>
+      <div class="money-entry-meta">Interest due through ${displayDateKey(asOfDate)} ${rs(interestDue)} · Interest paid ${rs(interestPaid)} · Interest outstanding ${rs(interestOutstanding)} · Principal remaining ${rs(principalOutstanding)}</div>
+      ${record.phone?'': '<div class="money-help">No WhatsApp number saved; reminder sending is unavailable.</div>'}
+      ${interestPaymentHistoryHtml(record)}
+      <div class="money-entry-actions"><button type="button" class="ghost" data-interest-action="notice" data-interest-id="${escapeHtml(record.id)}">Due statement</button><button type="button" class="gold" data-interest-action="payment" data-interest-id="${escapeHtml(record.id)}"${interestOutstanding===0&&principalOutstanding===0?' disabled':''}>Record payment</button><button type="button" class="ghost danger" data-interest-action="delete" data-interest-id="${escapeHtml(record.id)}">Delete</button></div>
+      <div class="t-small">${status}</div>
+    </article>`;
+  }).join(''):'<div class="empty-state">No interest loans have been added.</div>';
+}
 function renderLiabilityMonth(){
   const input = document.getElementById('liabilityMonth');
   if(!input) return;
@@ -1667,17 +2051,43 @@ function openRentDueNotice(id,month){
   const tenant=tenants.find(item=>item.id===id);
   if(!tenant || !validMonthKey(month)) return;
   dueNoticeTarget={kind:'tenant',id,month};
-  const rent=rentFor(tenant,month),received=paidSum(tenant,month),balance=balFor(tenant,month);
-  const dueDate=tenantDueDateForMonth(tenant,month);
+  document.getElementById('dueNoticeSend').disabled=false;
+  document.getElementById('dueNoticeSend').textContent='Send reminder on WhatsApp';
+  const entries=tenantRentBalanceEntries(tenant,month);
+  const outstanding=entries.filter(entry=>entry.balance>0);
+  const total=outstanding.reduce((sum,entry)=>sum+entry.balance,0);
   document.getElementById('dueNoticeTitle').textContent='Rent due receipt';
   document.getElementById('dueNoticeCard').innerHTML=`<div class="due-notice-brand">${escapeHtml(PROPERTY_NAME)}</div>
-    <div class="due-notice-title">Rent due receipt · ${escapeHtml(monthLabel(month))}</div>
+    <div class="due-notice-title">Rent due receipt · through ${escapeHtml(monthLabel(month))}</div>
     <div class="due-notice-row"><span>Tenant</span><strong>${escapeHtml(tenant.name)}</strong></div>
-    <div class="due-notice-row"><span>Monthly rent</span><strong>${rs(rent)}</strong></div>
-    <div class="due-notice-row"><span>Received so far</span><strong>${rs(received)}</strong></div>
-    <div class="due-notice-row"><span>Due date</span><strong>${escapeHtml(displayDateKey(dueDate))}</strong></div>
-    <div class="due-notice-row due-notice-total"><span>Balance due</span><strong>${rs(balance)}</strong></div>
+    ${outstanding.map(entry=>`<div class="due-notice-row"><span>${escapeHtml(monthLabel(entry.month))}<small class="t-small">Rent ${rs(entry.rent)} · received ${rs(entry.received)} · due ${escapeHtml(displayDateKey(entry.dueDate))}</small></span><strong>${rs(entry.balance)}</strong></div>`).join('')}
+    <div class="due-notice-row due-notice-total"><span>Total balance due</span><strong>${rs(total)}</strong></div>
     <p class="tracker-note">This due receipt is a statement of the balance recorded in Rent Ledger, not a proof of payment.</p>`;
+  document.getElementById('dueNoticeOv').classList.add('open');
+}
+function openInterestDueNotice(id){
+  const loan=interestLoans.find(item=>item.id===id);
+  if(!loan) return;
+  const asOfDate=todayDateKey();
+  const interestDue=interestDueThrough(loan,asOfDate);
+  const interestPaid=interestPaidThrough(loan,asOfDate);
+  const interestOutstanding=Math.max(0,interestDue-interestPaid);
+  const principalOutstanding=interestPrincipalOutstandingThrough(loan,asOfDate);
+  dueNoticeTarget={kind:'interest',id};
+  document.getElementById('dueNoticeTitle').textContent='Interest loan statement';
+  document.getElementById('dueNoticeCard').innerHTML=`<div class="due-notice-brand">Interest loan statement</div>
+    <div class="due-notice-title">${escapeHtml(loan.person||'Unnamed person')} · through ${escapeHtml(displayDateKey(asOfDate))}</div>
+    <div class="due-notice-row"><span>Original principal</span><strong>${rs(loan.principal)}</strong></div>
+    <div class="due-notice-row"><span>Monthly interest to collect</span><strong>${rs(interestMonthlyAmount(loan))}</strong></div>
+    <div class="due-notice-row"><span>Interest due</span><strong>${rs(interestDue)}</strong></div>
+    <div class="due-notice-row"><span>Interest paid</span><strong>${rs(interestPaid)}</strong></div>
+    <div class="due-notice-row"><span>Interest outstanding</span><strong>${rs(interestOutstanding)}</strong></div>
+    <div class="due-notice-row"><span>Principal remaining · due ${escapeHtml(displayDateKey(loan.dueDate))}</span><strong>${rs(principalOutstanding)}</strong></div>
+    <div class="due-notice-row due-notice-total"><span>Total outstanding</span><strong>${rs(interestOutstanding+principalOutstanding)}</strong></div>
+    <p class="tracker-note">Monthly interest uses the fixed amount entered for this loan. This is a statement of the balance recorded in Rent Ledger.</p>`;
+  const phone=String(loan.phone||'').replace(/[^0-9]/g,'');
+  document.getElementById('dueNoticeSend').disabled=phone.length<7 || phone.length>15;
+  document.getElementById('dueNoticeSend').textContent=phone.length>=7&&phone.length<=15?'Send gentle reminder on WhatsApp':'Add a WhatsApp number to enable reminders';
   document.getElementById('dueNoticeOv').classList.add('open');
 }
 let dueNoticeTarget=null;
@@ -1685,6 +2095,8 @@ function openLoanDueNotice(id,month){
   const loan=moneyOwedToMe.find(item=>item.id===id);
   if(!loan || !validMonthKey(month)) return;
   dueNoticeTarget={kind:'loan',id,month};
+  document.getElementById('dueNoticeSend').disabled=false;
+  document.getElementById('dueNoticeSend').textContent='Send reminder on WhatsApp';
   const collected=recordPayments(loan).filter(payment=>dateMonthKey(payment.date)===month).reduce((sum,payment)=>sum+(Number(payment.amount)||0),0);
   document.getElementById('dueNoticeTitle').textContent='Repayment due notice';
   document.getElementById('dueNoticeCard').innerHTML=`<div class="due-notice-brand">Money owed to you</div>
@@ -1705,6 +2117,31 @@ function sendDueNotice(){
     sendReminder(target.id,target.month);
     return;
   }
+  if(target.kind==='interest'){
+    const loan=interestLoans.find(item=>item.id===target.id);
+    if(!loan) return;
+    const phone=String(loan.phone||'').replace(/[^0-9]/g,'');
+    if(phone.length<7 || phone.length>15){ alert('Add a valid WhatsApp number to this interest loan before sending a reminder.'); return; }
+    const asOfDate=todayDateKey();
+    const interestDue=interestDueThrough(loan,asOfDate);
+    const interestOutstanding=interestOutstandingThrough(loan,asOfDate);
+    const principalOutstanding=interestPrincipalOutstandingThrough(loan,asOfDate);
+    const message=['*Friendly interest loan reminder*',
+      'Hello '+loan.person+', I hope you are well.',
+      'Original principal: '+rs(loan.principal),
+      'Monthly interest to collect: '+rs(interestMonthlyAmount(loan)),
+      'Interest due through '+displayDateKey(asOfDate)+': '+rs(interestDue),
+      'Interest still outstanding: '+rs(interestOutstanding),
+      'Principal remaining, due '+displayDateKey(loan.dueDate)+': '+rs(principalOutstanding),
+      'Total outstanding: '+rs(interestOutstanding+principalOutstanding),
+      'Please let me know when you expect to make the payment. Thank you.'].join('\n');
+    if(!Array.isArray(loan.reminders)) loan.reminders=[];
+    loan.reminders.push({sentAt:new Date().toISOString()});
+    saveData();
+    window.open('https://wa.me/'+phone+'?text='+encodeURIComponent(message),'_blank');
+    render();
+    return;
+  }
   const loan=moneyOwedToMe.find(item=>item.id===target.id);
   if(!loan) return;
   const phone=String(loan.phone||'').replace(/[^0-9]/g,'');
@@ -1721,23 +2158,31 @@ function sendDueNotice(){
   window.open('https://wa.me/'+phone+'?text='+encodeURIComponent(message),'_blank');
 }
 function renderMonthlyCollectionTracker(month){
-  const tenantRows=tenants.map(tenant=>{
-    const rent=rentFor(tenant,month), received=paidSum(tenant,month), balance=balFor(tenant,month);
+  const asOfDate=monthAsOfDate(month);
+  const tenantRows=tenants.filter(tenant=>tenantRentBalanceEntries(tenant,month).length>0).map(tenant=>{
+    const entries=tenantRentBalanceEntries(tenant,month);
+    const selectedEntry=entries.find(entry=>entry.month===month);
+    const rent=selectedEntry?selectedEntry.rent:rentFor(tenant,month);
+    const received=selectedEntry?selectedEntry.received:paidSum(tenant,month);
+    const currentBalance=selectedEntry?selectedEntry.balance:0;
+    const pastBalance=entries.filter(entry=>entry.month<month).reduce((sum,entry)=>sum+entry.balance,0);
+    const totalBalance=pastBalance+currentBalance;
     const dueDate=tenantDueDateForMonth(tenant,month);
+    const overdueEntries=entries.filter(entry=>entry.balance>0 && entry.dueDate<asOfDate);
     const monthPayments=cyclePays(tenant,month).slice().sort((a,b)=>String(b.paidOn||'').localeCompare(String(a.paidOn||'')));
     let status='Due';
     let statusClass='';
-    if(balance===0){
+    if(totalBalance===0 && currentBalance===0){
       const lastPayment=monthPayments[0];
       const paidByDate=lastPayment && dueDate && dateMonthKey(lastPayment.paidOn)===month && lastPayment.paidOn.slice(0,10)<=dueDate;
-      status=paidByDate?'Paid on time':'Paid';
-      statusClass='paid';
-    }else if(dueDate<todayDateKey()){
+      status=lastPayment?(paidByDate?'Paid on time':'Paid'):'No balance due';
+      statusClass=lastPayment?'paid':'';
+    }else if(overdueEntries.length){
       status='Overdue'; statusClass='overdue';
-    }else if(received>0){
+    }else if(currentBalance>0 && received>0){
       status='Part-paid';
     }
-    return `<tr><td>${escapeHtml(tenant.name)}</td><td class="amount">${rs(rent)}</td><td class="amount">${rs(received)}</td><td class="amount">${rs(balance)}</td><td class="status ${statusClass}">${status}</td><td>${balance>0 && dueDate<todayDateKey()?`<button type="button" class="tracker-action" data-tracker-action="rent-notice" data-record-id="${escapeHtml(tenant.id)}">Due receipt</button>`:''}</td></tr>`;
+    return `<tr><td>${escapeHtml(tenant.name)}</td><td class="amount">${rs(rent)}</td><td class="amount">${rs(received)}</td><td class="amount">${rs(pastBalance)}</td><td class="amount">${rs(totalBalance)}</td><td class="status ${statusClass}">${status}</td><td>${overdueEntries.length?`<button type="button" class="tracker-action" data-tracker-action="rent-notice" data-record-id="${escapeHtml(tenant.id)}">Due receipt</button>`:''}</td></tr>`;
   }).join('');
   const selectedOrdinal=monthOrdinal(month);
   const loanRows=moneyOwedToMe.filter(loan=>loan && typeof loan==='object').filter(loan=>{
@@ -1765,10 +2210,10 @@ function renderMonthlyCollectionTracker(month){
     const outstanding=liabilityBalanceThrough(record,month);
     return `<tr><td>${escapeHtml(record.person||'Unnamed person')}</td><td class="amount">${rs(scheduled+carried)}</td><td class="amount">${rs(paid)}</td><td class="amount">${rs(outstanding)}</td><td class="status">${outstanding>0?'To pay':'Paid'}</td><td></td></tr>`;
   }).join('');
-  const table=(headers,rows,empty)=>`<div class="tracker-table-wrap"><table class="tracker-table"><thead><tr>${headers.map(header=>`<th>${header}</th>`).join('')}</tr></thead><tbody>${rows||`<tr><td colspan="6">${empty}</td></tr>`}</tbody></table></div>`;
+  const table=(headers,rows,empty)=>`<div class="tracker-table-wrap"><table class="tracker-table"><thead><tr>${headers.map(header=>`<th>${header}</th>`).join('')}</tr></thead><tbody>${rows||`<tr><td colspan="${headers.length}">${empty}</td></tr>`}</tbody></table></div>`;
   document.getElementById('monthlyCollectionTracker').innerHTML=`<div class="dashboard-card-head"><h3>Monthly collection tracker · ${escapeHtml(monthLabel(month))}</h3></div>
     <p class="tracker-note">Compare each month's due amount, money received, and outstanding balance. Rent due receipts include the property name and can be printed or shared as a WhatsApp text reminder.</p>
-    <div class="tracker-section"><h4>Tenant rent</h4>${table(['Tenant','Rent due','Received','Balance','Status',''],tenantRows,'No tenants added.')}</div>
+    <div class="tracker-section"><h4>Tenant rent</h4>${table(['Tenant','Rent this month','Received','Past due','Total outstanding','Status',''],tenantRows,'No tenants started in this month.')}</div>
     <div class="tracker-section"><h4>Money owed to you</h4>${table(['Person','Expected','Collected','Outstanding','Status',''],loanRows,'No loan return or collection activity for this month.')}</div>
     <div class="tracker-section"><h4>Liabilities to pay</h4>${table(['Person / organization','Due + arrears','Paid','Outstanding','Status',''],liabilityRows,'No liabilities due or outstanding for this month.')}</div>`;
 }
@@ -1776,18 +2221,23 @@ function renderDashboard(){
   const currentMonth = currentCycleKey();
   const currentRentReceived = rentReceivedForMonth(currentMonth);
   const loansOutstanding = moneyOwedToMe.reduce((total,record)=>total+moneyOutstanding(record),0);
+  const interestOutstanding=interestLoans.reduce((total,record)=>total+interestOutstandingThrough(record,todayDateKey())+interestPrincipalOutstandingThrough(record,todayDateKey()),0);
   const currentLiabilities = liabilities.reduce((total,record)=>total+liabilityBalanceThrough(record,currentMonth),0);
   document.getElementById('dashboardSummary').innerHTML = `
     <div class="sum-card"><div class="n">${tenants.length}</div><div class="l">Tenants</div></div>
     <div class="sum-card"><div class="n">${rs(currentRentReceived)}</div><div class="l">Rent received this month</div></div>
     <div class="sum-card"><div class="n">${rs(loansOutstanding)}</div><div class="l">Owed to you</div></div>
+    <div class="sum-card"><div class="n">${rs(interestOutstanding)}</div><div class="l">Interest loans outstanding</div></div>
     <div class="sum-card"><div class="n">${rs(currentLiabilities)}</div><div class="l">You owe (outstanding)</div></div>`;
 
   const monthInput = document.getElementById('dashboardMonth');
   if(!validMonthKey(monthInput.value)) monthInput.value = currentMonth;
   const selectedMonth = monthInput.value;
   const rentForMonth = rentReceivedForMonth(selectedMonth);
-  const rentDue = tenants.reduce((total,tenant)=>total+rentFor(tenant,selectedMonth),0);
+  const rentDue = tenants.reduce((total,tenant)=>{
+    const entry=tenantRentBalanceEntries(tenant,selectedMonth).find(item=>item.month===selectedMonth);
+    return total+(entry?entry.rent:0);
+  },0);
   const collections = loanCollectionsForMonth(selectedMonth);
   const liabilityDue = liabilities.reduce((total,record)=>total+liabilityScheduledForMonth(record,selectedMonth),0);
   const liabilityPaid = liabilityPaidForMonth(selectedMonth);
@@ -1936,7 +2386,7 @@ function cloudPush(){
   clearTimeout(pushT); setSync('Saving…');
   pushT = setTimeout(async ()=>{
     const ts = localStorage.getItem(STORE_KEY + '.ts') || new Date().toISOString();
-    const {error} = await sb.from('ledgers').upsert({user_id: user.id, data: {tenants, payments, reminders, moneyOwedToMe, liabilities, settings}, updated_at: ts});
+    const {error} = await sb.from('ledgers').upsert({user_id: user.id, data: {tenants, payments, reminders, moneyOwedToMe, interestLoans, liabilities, settings}, updated_at: ts});
     setSync(error ? '⚠ Not synced' : '✓ Synced'); if(error) console.error(error);
   }, 800);
 }

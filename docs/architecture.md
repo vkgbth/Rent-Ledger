@@ -43,7 +43,7 @@ flowchart TD
 3. The app fetches the signed-in user's `ledgers` row. If the cloud timestamp is newer than the local timestamp, cloud JSON replaces the local cache; otherwise the local ledger is uploaded. A first sign-in can optionally move the legacy browser-only ledger into the account.
 4. Changes are saved to local storage immediately. Authenticated changes are uploaded to Supabase after a short debounce.
 5. Reminder and receipt actions construct a WhatsApp URL with a prefilled message. The user must send the message in WhatsApp.
-6. The Money tracker stores loans, expected return dates, collection history, one-time/monthly liabilities, and month-assigned liability payments in the same ledger document. Unpaid liability balances carry forward.
+6. The Money tracker stores non-interest loans and one-time/monthly liabilities. A separate Interest loans tab stores a fixed monthly collection amount, separate interest/principal payments, and due reminders in the same ledger document.
 7. Backup sharing uses the browser/device share sheet when file sharing is supported. Otherwise, the app downloads the JSON backup and asks the user to attach it manually to a WhatsApp message or email.
 
 ## Deployment notes
