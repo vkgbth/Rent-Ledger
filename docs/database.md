@@ -20,6 +20,8 @@ erDiagram
     LEDGER ||--|| TENANT_COLLECTION : contains_in_data
     LEDGER ||--|| PAYMENT_COLLECTION : contains_in_data
     LEDGER ||--|| REMINDER_COLLECTION : contains_in_data
+    LEDGER ||--|| MONEY_OWED_COLLECTION : contains_in_data
+    LEDGER ||--|| LIABILITY_COLLECTION : contains_in_data
     LEDGER ||--|| SETTINGS : contains_in_data
 
     TENANT_COLLECTION {
@@ -32,6 +34,14 @@ erDiagram
 
     REMINDER_COLLECTION {
         json reminders "JSON array in data"
+    }
+
+    MONEY_OWED_COLLECTION {
+        json moneyOwedToMe "JSON array in data"
+    }
+
+    LIABILITY_COLLECTION {
+        json liabilities "JSON array in data"
     }
 
     SETTINGS {
@@ -51,6 +61,8 @@ erDiagram
   "tenants": [],
   "payments": [],
   "reminders": [],
+  "moneyOwedToMe": [],
+  "liabilities": [],
   "settings": {
     "issuedBy": "",
     "seq": 0
@@ -63,6 +75,8 @@ erDiagram
 - **Tenant** — `id`, `name`, `phone`, `amount`, `dueDay`, `message`, `flat`, `since`, `agrStart`, `deposit`, `notes`, `photo`, and optionally `noticeAt`. The optional photo is stored as a resized data URL.
 - **Payment** — `id`, `tenantId`, `tenantName`, `month` (`YYYY-MM`), `paidOn`, `amount`, `rent`, `note`, and `receiptNo`.
 - **Reminder** — `id`, `tenantId`, `month` (`YYYY-MM`), and `sentAt`.
+- **Money owed to me** — `id`, `person`, optional WhatsApp `phone`, `amount`, `expectedDate`, `description`, optional `calculationItems` and resized `calculationPhoto`, and a `payments` array. Each collection records `id`, `amount`, `date`, and optional `note`. Optional reminders are stored on the loan record.
+- **Liability** — `id`, `person`, `amount`, `description`, `frequency` (`once` or `monthly`), and a `payments` array. One-time liabilities store `dueDate`; monthly liabilities store `dueDay`, `startMonth`, and optional `stopMonth`. Each payment stores its date, amount, and applied month. Unpaid scheduled amounts carry forward in reports.
 - **Settings** — `issuedBy` and `seq`, used for receipts.
 
 Fields are stored as JavaScript values from the page; several form values such as rent and due day are strings. Imported backups are expected to use the same object shape.
@@ -76,4 +90,4 @@ Fields are stored as JavaScript values from the page; several form values such a
 
 The cloud row should have one row per user, with `user_id` as a primary or unique key and an appropriate foreign key to Supabase Auth. Enable RLS and create policies that limit reads and writes to the authenticated owner (for example, enforce `auth.uid() = user_id` for both visibility and writes). The client-side filter alone does not provide authorization.
 
-All tenant/payment/reminder records are replaced together when the app syncs the ledger document; there is no per-record cloud synchronization or database-level referential integrity between those JSON records.
+All tenant, payment, reminder, loan, and liability records are replaced together when the app syncs the ledger document; there is no per-record cloud synchronization or database-level referential integrity between those JSON records. Older ledgers without the two money-tracking arrays continue to load with empty collections.

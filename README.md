@@ -5,13 +5,18 @@ Rent Ledger is a lightweight, single-page rent-management app for landlords. It 
 ## Features
 
 - Keep tenant contact details, rent, due day, flat/room, agreement dates, deposit, notes, and an optional photo.
-- See current-month due status, overdue balances, monthly received/pending totals, and payment history.
+- Start from a dashboard with rent totals, money owed/owing, due items, and an animated six-month cash-flow chart.
+- Review a selected month's tenant rent, loan returns, and liabilities together, with due, received, and outstanding amounts.
+- See current-month tenant due status, overdue balances, monthly received/pending totals, and payment history.
 - Record full or partial payments, including payments for past months.
+- Track money lent to others with expected return dates, partial collection history, calculation line items, and an optional calculator screenshot.
+- Track one-time and recurring monthly liabilities separately from tenants, record partial payments, and carry unpaid balances forward month by month.
 - Generate receipts that can be copied, printed/saved as PDF, or shared through WhatsApp.
+- Generate printable rent due receipts and send a detailed due reminder on WhatsApp. Rent receipts and due notices identify the home as **Anatam Niwas**.
 - Compose rent and renewal reminders and open them in WhatsApp. The app does not send messages automatically; you review and send them in WhatsApp.
-- Show creator attribution in the footer with direct call and WhatsApp contact buttons for development inquiries.
-- Read a collapsible About section describing the app and its data flow.
-- Export and import a JSON backup.
+- Use separate Dashboard, Tenants, Money tracker, and About tabs.
+- View creator details and photo with direct call and WhatsApp contact buttons in About.
+- Download a JSON backup, or use the device share sheet to send it through WhatsApp or email when supported. Otherwise, attach the downloaded file manually.
 - Use browser-only storage, or sign in to sync a ledger through Supabase.
 - Install the responsive app on a phone's home screen as a PWA.
 
@@ -37,6 +42,7 @@ The service worker caches the app shell so it can reopen offline. Supabase sign-
 ## Data and privacy
 
 - Browser-only data is stored in `localStorage` under `rentLedger.v2`. Signed-in data is cached under an account-specific key in the same browser.
+- Loans, collections, liabilities, and liability payments are included in backups and cloud sync. Optional calculator screenshots are resized and stored in the ledger.
 - Cloud sync stores each user's complete ledger as JSON in one `ledgers` row. See [the database diagram](docs/database.md).
 - The Supabase anonymous key included in a browser app is public by design; it is not a secret. The Supabase project must enforce per-user access with Row Level Security (RLS) policies on `ledgers`. Do not rely on client-side filtering as access control.
 - Tenant details and optional photos are stored in the ledger. Protect the device/browser account and restrict cloud access appropriately.
@@ -51,6 +57,7 @@ index.html          UI, styles, application logic, local persistence, and Supaba
 manifest.webmanifest Installable app metadata
 service-worker.js   App-shell caching for PWA launch
 icons/              App icons
+assets/             About photo and other app assets
 docs/
   architecture.md   Runtime architecture diagram and flow
   database.md       Persisted-data model and database diagram
