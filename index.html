@@ -35,9 +35,10 @@
   header{
     display:flex;justify-content:space-between;align-items:flex-end;
     border-bottom:2px solid var(--green-deep);
-    padding-bottom:14px;margin-bottom:8px;
+    padding-bottom:14px;margin-bottom:8px;flex-wrap:wrap;gap:8px;
   }
   h1{font-family:'Fraunces',serif;font-weight:600;font-size:30px;margin:0;color:var(--green-deep);letter-spacing:-0.3px;}
+  .header-right{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
   .month-tag{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.08em;}
   .storage-note{font-size:12px;color:var(--ink-soft);margin:8px 0 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
   .storage-note .links{display:flex;gap:14px;}
@@ -90,6 +91,13 @@
   .rc td:last-child{text-align:right;font-family:'JetBrains Mono',monospace;}
   .t-small{font-size:11px;color:var(--ink-soft);display:block;font-family:'Inter',sans-serif;margin-top:3px;}
   @media print{body{background:none;padding:0;}.wrap,.noprint{display:none!important;}.ov{position:static;background:none;padding:0;}.box{max-width:none;padding:0;}}
+  .tenant-row.overdue:not(.paid){background:#FBEFEC;}
+  .tenant-row.overdue:not(.paid) .t-amount{color:var(--red-stamp);}
+  .red{color:var(--red-stamp);font-weight:500;}
+  .av{width:44px;height:44px;border-radius:50%;object-fit:cover;background:var(--green-deep);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:600;flex:none;}
+  .t-head{display:flex;align-items:center;gap:10px;cursor:pointer;}
+  .renew{background:#FBF3DD;border:1px solid var(--gold);border-radius:6px;padding:10px 14px;margin-bottom:16px;font-size:13px;line-height:1.6;}
+  .pr-row{display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-top:1px solid var(--paper-line);font-size:13px;}
   .stamp{
     position:absolute;right:130px;top:50%;transform:translateY(-50%) rotate(-8deg);
     border:2px solid var(--gold);color:var(--gold);font-family:'JetBrains Mono',monospace;
@@ -100,21 +108,30 @@
     font-family:'Inter',sans-serif;font-size:13px;font-weight:500;cursor:pointer;border-radius:5px;
     border:1px solid var(--green-deep);background:var(--green-deep);color:#fff;padding:7px 14px;transition:opacity .15s;
   }
-  button:hover{opacity:0.88;}
+  button:hover:not(:disabled){opacity:0.88;}
+  button:disabled{opacity:0.55;cursor:not-allowed;}
   button.gold{background:var(--gold);border-color:var(--gold);}
   button.ghost{background:transparent;color:var(--ink-soft);border-color:var(--paper-line);font-weight:400;font-size:12px;padding:6px 10px;}
-  button.ghost:hover{color:var(--ink);border-color:var(--ink-soft);}
+  button.ghost:hover:not(:disabled){color:var(--ink);border-color:var(--ink-soft);}
 
   .form-card{background:var(--card);border:1px solid var(--paper-line);border-radius:8px;padding:20px;box-shadow:var(--shadow);}
   .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;}
   .field{display:flex;flex-direction:column;gap:4px;}
   .field.full{grid-column:1/-1;}
   label{font-size:12px;color:var(--ink-soft);font-weight:500;}
-  input,textarea{font-family:'Inter',sans-serif;font-size:14px;padding:8px 10px;border:1px solid var(--paper-line);border-radius:5px;background:#FCFBF7;color:var(--ink);}
+  input,textarea{font-family:'Inter',sans-serif;font-size:14px;padding:8px 10px;border:1px solid var(--paper-line);border-radius:5px;background:#FCFBF7;color:var(--ink);width:100%;}
   input:focus,textarea:focus{outline:2px solid var(--gold-soft);border-color:var(--gold);}
   textarea{resize:vertical;min-height:64px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.5;}
   .hint{font-size:11px;color:var(--ink-soft);margin-top:6px;}
   .form-actions{margin-top:14px;display:flex;gap:10px;justify-content:flex-end;}
+
+  .pw-wrap{position:relative;display:flex;align-items:center;}
+  .pw-wrap input{padding-right:64px;}
+  .pw-toggle{
+    position:absolute;right:6px;background:transparent;border:none;color:var(--green-mid);
+    font-size:12px;font-weight:500;padding:4px 8px;border-radius:4px;
+  }
+  .pw-toggle:hover:not(:disabled){background:var(--paper);opacity:1;color:var(--green-deep);}
 
   .empty{text-align:center;padding:36px 20px;color:var(--ink-soft);font-size:14px;border:1px dashed var(--paper-line);border-radius:8px;}
 
@@ -131,15 +148,19 @@
     .stamp{display:none;}
   }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 </head>
 <body>
 <div class="wrap">
   <header>
     <h1>Rent ledger</h1>
-    <span class="month-tag" id="monthTag"></span>
+    <div class="header-right">
+      <span class="month-tag" id="monthTag"></span>
+      <span id="userBar" style="font-size:12px"></span>
+    </div>
   </header>
   <div class="storage-note">
-    <span>Saved in this browser only, on this device.</span>
+    <span id="storageText">Saved in this browser only, on this device.</span>
     <span class="links">
       <a id="exportLink">Export backup</a>
       <a id="importLink">Import backup</a>
@@ -147,15 +168,21 @@
     <input type="file" id="importFile" accept="application/json">
   </div>
 
+  <div id="renewBox"></div>
   <div class="summary" id="summary"></div>
 
   <section>
-    <div class="section-head"><h2>Tenants</h2><div class="rule"></div></div>
+    <div class="section-head"><h2>Tenants</h2><div class="rule"></div><select id="sortBy" onchange="render()" style="font-size:12px"><option value="due">Sort: due date</option><option value="over">Overdue first</option><option value="bal">Highest balance</option><option value="name">Name A–Z</option></select></div>
     <div id="tenantList"></div>
   </section>
 
   <section>
-    <div class="section-head"><h2>Payments &amp; receipts</h2><div class="rule"></div><span style="font-size:11px;color:var(--ink-soft);">auto-cleared after 2 months</span></div>
+    <div class="section-head"><h2>Month-wise received &amp; baki</h2><div class="rule"></div></div>
+    <div id="monthBox" style="overflow-x:auto"></div>
+  </section>
+
+  <section>
+    <div class="section-head"><h2>Payments &amp; receipts</h2><div class="rule"></div></div>
     <div id="historyBox"></div>
   </section>
 
@@ -179,6 +206,12 @@
           <label for="fDueDay">Due day of month</label>
           <input id="fDueDay" type="number" min="1" max="31" placeholder="5">
         </div>
+        <div class="field"><label>Photo (optional)</label><input id="fPhoto" type="file" accept="image/*"></div>
+        <div class="field"><label>Flat / room</label><input id="fFlat" placeholder="2nd floor, Room 3"></div>
+        <div class="field"><label>Staying since</label><input id="fSince" type="date"></div>
+        <div class="field"><label>Agreement start (blank = staying since)</label><input id="fAgr" type="date"></div>
+        <div class="field"><label>Security deposit (₹)</label><input id="fDeposit" type="number"></div>
+        <div class="field full"><label>Other details (ID proof, family members, work, emergency contact…)</label><textarea id="fNotes"></textarea></div>
         <div class="field full">
           <label for="fMessage">Reminder message — use {name}, {amount} (balance due), {dueDate}</label>
           <textarea id="fMessage"></textarea>
@@ -192,12 +225,41 @@
     </div>
   </section>
 </div>
+
+<div class="ov" id="authOv" style="background:#F4F0E6"><div class="box" style="box-shadow:0 2px 16px rgba(0,0,0,.12)">
+  <h2 style="margin:0 0 4px;font-family:'Fraunces',serif;color:var(--green-deep)">Rent ledger</h2>
+  <div class="hint" style="margin-bottom:14px">Sign in to open your private ledger and keep data synced.</div>
+  <div class="form-grid">
+    <div class="field full">
+      <label for="authEmail">Email</label>
+      <input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com">
+    </div>
+    <div class="field full">
+      <label for="authPass">Password (min 6 characters)</label>
+      <div class="pw-wrap">
+        <input id="authPass" type="password" autocomplete="current-password" placeholder="••••••••">
+        <button type="button" class="pw-toggle" id="pwToggle" onclick="togglePw()" aria-label="Show password">Show</button>
+      </div>
+    </div>
+  </div>
+  <div class="hint" id="authMsg" style="margin-top:8px;min-height:16px"></div>
+  <div class="form-actions" style="flex-wrap:wrap;justify-content:space-between;align-items:center">
+    <button type="button" class="ghost" id="forgotBtn" onclick="forgotPw()">Forgot password</button>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button type="button" class="ghost" id="signupBtn" onclick="authGo(true)">Create account</button>
+      <button type="button" id="signinBtn" onclick="authGo(false)">Sign in</button>
+    </div>
+  </div>
+</div></div>
+
+<div class="ov" id="prOv"><div class="box"><div id="prBody"></div><div class="form-actions" style="flex-wrap:wrap"><button class="ghost" onclick="closeOv('prOv')">Close</button><button class="ghost" id="prEdit">Edit</button><button class="ghost" id="prRenew">Mark renewed</button><button id="prNotice">Send renewal notice</button></div></div></div>
 <div class="ov" id="payOv"><div class="box">
   <h2 style="margin:0 0 4px;font-family:'Fraunces',serif" id="payTitle">Record payment</h2>
   <div class="hint" id="payHint" style="margin:0 0 12px"></div>
   <div class="form-grid">
     <div class="field"><label>Amount received (₹)</label><input id="payAmt" type="number"></div>
     <div class="field"><label>Date received</label><input id="payDate" type="date"></div>
+    <div class="field"><label>For month</label><input id="payMonth" type="month" onchange="payMonthChanged()"></div>
     <div class="field full"><label>Mode / note (optional)</label><input id="payNote" placeholder="UPI, cash, balance next week…"></div>
   </div>
   <div class="form-actions"><button class="ghost" onclick="closeOv('payOv')">Cancel</button><button onclick="savePay()">Save &amp; make receipt</button></div>
@@ -210,11 +272,12 @@
 
 <script>
 const DEFAULT_TEMPLATE = "Hi {name}, this is a friendly reminder that your rent of ₹{amount} is due on {dueDate}. Kindly make the payment at your earliest convenience. Thank you!";
-const STORE_KEY = 'rentLedger.v2';
+const BASE_KEY = 'rentLedger.v2';
+let STORE_KEY = BASE_KEY;
 let tenants = [];
-let payments = []; // {id, tenantId, month:'YYYY-MM', paidOn: ISO date, amount}
+let payments = [];
 let settings = {issuedBy:'', seq:0};
-let reminders = []; // {id, tenantId, month:'YYYY-MM', sentAt: ISO datetime}
+let reminders = [];
 let editingId = null;
 
 const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -238,13 +301,14 @@ function loadData(){
 
 function saveData(){
   localStorage.setItem(STORE_KEY, JSON.stringify({tenants, payments, reminders, settings}));
+  localStorage.setItem(STORE_KEY + '.ts', new Date().toISOString());
+  cloudPush();
 }
 
 function cleanupOldPayments(){
   const now = new Date();
   const cutoff = new Date(now.getFullYear(), now.getMonth()-2, now.getDate());
   const before = payments.length + reminders.length;
-  payments = payments.filter(p => new Date(p.paidOn) >= cutoff);
   reminders = reminders.filter(r => new Date(r.sentAt) >= cutoff);
   if(payments.length + reminders.length !== before) saveData();
   let ch = false;
@@ -253,9 +317,12 @@ function cleanupOldPayments(){
 }
 function nextNo(){ settings.seq = (settings.seq||0) + 1; return 'R-' + String(settings.seq).padStart(4,'0'); }
 const rs = n => '₹' + Number(n).toLocaleString('en-IN');
-function cyclePays(t){ return payments.filter(p=>p.tenantId===t.id && p.month===currentCycleKey()); }
-function paidSum(t){ return cyclePays(t).reduce((s,p)=>s+Number(p.amount),0); }
-function balanceOf(t){ return Math.max(0, Number(t.amount) - paidSum(t)); }
+function cyclePays(t,m){ return payments.filter(p=>p.tenantId===t.id && p.month===(m||currentCycleKey())); }
+function paidSum(t,m){ return cyclePays(t,m).reduce((s,p)=>s+Number(p.amount),0); }
+function balanceOf(t,m){ return balFor(t, m||currentCycleKey()); }
+function rentFor(t,m){ const x = payments.find(q=>q.tenantId===t.id && q.month===m && q.rent); return (m===currentCycleKey() || !x) ? Number(t.amount) : Number(x.rent); }
+function balFor(t,m,ex){ return Math.max(0, rentFor(t,m) - cyclePays(t,m).filter(q=>q.id!==ex).reduce((s,q)=>s+Number(q.amount),0)); }
+const ml = k => { const [y,m] = k.split('-'); return monthNames[Number(m)-1] + ' ' + y; };
 
 function lastDayOf(y,m){ return new Date(y, m+1, 0).getDate(); }
 
@@ -295,6 +362,8 @@ function resetForm(){
   document.getElementById('fPhone').value = '';
   document.getElementById('fAmount').value = '';
   document.getElementById('fDueDay').value = '';
+  ['fFlat','fSince','fAgr','fDeposit','fNotes','fPhoto'].forEach(i=>document.getElementById(i).value='');
+  photoData = '';
   document.getElementById('fMessage').value = DEFAULT_TEMPLATE;
   document.getElementById('cancelEdit').style.display = 'none';
 }
@@ -308,6 +377,9 @@ function editTenant(id){
   document.getElementById('fPhone').value = t.phone;
   document.getElementById('fAmount').value = t.amount;
   document.getElementById('fDueDay').value = t.dueDay;
+  document.getElementById('fFlat').value = t.flat||''; document.getElementById('fSince').value = t.since||'';
+  document.getElementById('fAgr').value = t.agrStart||''; document.getElementById('fDeposit').value = t.deposit||'';
+  document.getElementById('fNotes').value = t.notes||''; photoData = t.photo||'';
   document.getElementById('fMessage').value = t.message;
   document.getElementById('cancelEdit').style.display = 'inline-block';
   document.getElementById('formTitle').scrollIntoView({behavior:'smooth', block:'center'});
@@ -349,30 +421,48 @@ function sendReminder(id){
 
 let payFor = null, rcPid = null;
 function closeOv(id){ document.getElementById(id).classList.remove('open'); }
-function openPay(id){
+let editId = null;
+function openPay(id, eid, past){
   const t = tenants.find(x=>x.id===id); if(!t) return;
-  payFor = id;
-  const n = new Date();
-  document.getElementById('payAmt').value = balanceOf(t);
-  document.getElementById('payDate').value = n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');
-  document.getElementById('payNote').value = '';
-  document.getElementById('payTitle').textContent = 'Payment from ' + t.name;
-  document.getElementById('payHint').textContent = 'Balance due ' + rs(balanceOf(t)) + ' of ' + rs(t.amount) + '. Edit the amount if it is a part payment.';
+  payFor = id; editId = eid || null;
+  const p = editId && payments.find(x=>x.id===editId);
+  const f = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+  const [cy,cm] = currentCycleKey().split('-').map(Number);
+  const pd = p ? new Date(p.paidOn) : new Date();
+  const pm = p ? p.month : past ? f(new Date(cy, cm-2, 1)) : currentCycleKey();
+  document.getElementById('payMonth').value = pm;
+  document.getElementById('payDate').value = f(pd)+'-'+String(pd.getDate()).padStart(2,'0');
+  document.getElementById('payNote').value = p ? (p.note||'') : '';
+  document.getElementById('payTitle').textContent = (p ? 'Edit payment · ' : 'Payment from ') + t.name;
+  document.getElementById('payAmt').value = p ? p.amount : balFor(t, pm);
+  payHint();
   document.getElementById('payOv').classList.add('open');
+}
+function payHint(){
+  const t = tenants.find(x=>x.id===payFor), m = document.getElementById('payMonth').value; if(!t||!m) return;
+  document.getElementById('payHint').textContent = ml(m) + ': balance ' + rs(balFor(t,m,editId)) + ' of ' + rs(rentFor(t,m)) + '. Change the month to add an older entry.';
+}
+function payMonthChanged(){
+  const t = tenants.find(x=>x.id===payFor), m = document.getElementById('payMonth').value;
+  if(t && m && !editId) document.getElementById('payAmt').value = balFor(t,m);
+  payHint();
 }
 function savePay(){
   const t = tenants.find(x=>x.id===payFor); if(!t) return;
   const amt = Number(document.getElementById('payAmt').value);
-  const ds = document.getElementById('payDate').value;
-  if(!(amt>0) || !ds){ alert('Enter the amount and the date received.'); return; }
-  if(amt > balanceOf(t) && !confirm('This is more than the balance of ' + rs(balanceOf(t)) + '. Record anyway?')) return;
+  const ds = document.getElementById('payDate').value, mk = document.getElementById('payMonth').value;
+  if(!(amt>0) || !ds || !mk){ alert('Enter the amount, the date received and the month.'); return; }
+  const bal = balFor(t, mk, editId);
+  if(amt > bal && !confirm('This is more than the balance of ' + rs(bal) + ' for ' + ml(mk) + '. Record anyway?')) return;
   const [y,m,d] = ds.split('-').map(Number), n = new Date();
-  const rec = {
-    id: 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
-    tenantId: t.id, tenantName: t.name, month: currentCycleKey(),
-    paidOn: new Date(y, m-1, d, n.getHours(), n.getMinutes()).toISOString(),
-    amount: amt, rent: Number(t.amount), note: document.getElementById('payNote').value.trim(), receiptNo: nextNo()
-  };
+  const when = new Date(y, m-1, d, n.getHours(), n.getMinutes()).toISOString();
+  const note = document.getElementById('payNote').value.trim();
+  if(editId){
+    Object.assign(payments.find(x=>x.id===editId), {amount: amt, paidOn: when, month: mk, note});
+    saveData(); closeOv('payOv'); render(); return;
+  }
+  const rec = {id: 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2,6), tenantId: t.id, tenantName: t.name,
+    month: mk, paidOn: when, amount: amt, rent: rentFor(t,mk), note, receiptNo: nextNo()};
   payments.push(rec); saveData(); closeOv('payOv'); render(); showReceipt(rec.id);
 }
 function rcFigures(p){
@@ -427,6 +517,8 @@ document.getElementById('saveTenant').addEventListener('click', ()=>{
   const amount = document.getElementById('fAmount').value;
   const dueDay = document.getElementById('fDueDay').value;
   const message = document.getElementById('fMessage').value.trim() || DEFAULT_TEMPLATE;
+  const g = i => document.getElementById(i).value.trim();
+  const ex = {flat:g('fFlat'), since:g('fSince'), agrStart:g('fAgr'), deposit:g('fDeposit'), notes:g('fNotes'), photo:photoData};
 
   if(!name || !phone || !amount || !dueDay){
     alert('Fill in name, WhatsApp number, rent amount, and due day.');
@@ -434,11 +526,11 @@ document.getElementById('saveTenant').addEventListener('click', ()=>{
   }
   if(editingId){
     const t = tenants.find(x=>x.id===editingId);
-    Object.assign(t, {name, phone, amount, dueDay, message});
+    Object.assign(t, {name, phone, amount, dueDay, message}, ex);
   } else {
     tenants.push({
       id: 't_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
-      name, phone, amount, dueDay, message
+      name, phone, amount, dueDay, message, ...ex
     });
   }
   saveData();
@@ -499,7 +591,10 @@ function render(){
   if(tenants.length === 0){
     list.innerHTML = '<div class="empty">No tenants yet. Add one below to start sending reminders.</div>';
   } else {
-    const sorted = [...tenants].sort((a,b)=> currentCycleDueDate(a) - currentCycleDueDate(b));
+    const sm = document.getElementById('sortBy').value;
+    const od = t => (!isPaidThisCycle(t) && daysUntil(currentCycleDueDate(t))<0) ? 0 : 1;
+    const byDue = (a,b)=> currentCycleDueDate(a) - currentCycleDueDate(b);
+    const sorted = [...tenants].sort(sm==='name' ? (a,b)=>a.name.localeCompare(b.name) : sm==='bal' ? (a,b)=>balanceOf(b)-balanceOf(a) : sm==='over' ? (a,b)=>od(a)-od(b)||byDue(a,b) : byDue);
     list.innerHTML = sorted.map(t=>{
       const due = currentCycleDueDate(t);
       const d = daysUntil(due);
@@ -526,8 +621,9 @@ function render(){
 
       return `<div class="${rowClass}">
         <div class="t-main">
-          <div class="t-name">${escapeHtml(t.name)}</div>
-          <div class="t-phone">+${escapeHtml(t.phone)}</div>
+          <div class="t-head" onclick="showProfile('${t.id}')">${avatar(t)}<div><div class="t-name">${escapeHtml(t.name)}</div>
+          <div class="t-phone">+${escapeHtml(t.phone)}${t.flat ? ' · ' + escapeHtml(t.flat) : ''}</div></div></div>
+          ${agrLine(t)}
           ${ps ? '<div class="t-small">Received: ' + cyclePays(t).map(q=>rs(q.amount)+' on '+formatDateISO(q.paidOn).slice(0,-5)).join(' · ') + '</div>' : ''}
           ${reminderHtml}
         </div>
@@ -535,7 +631,7 @@ function render(){
         <div class="t-status ${statusClass}">${statusText}</div>
         ${paidRecord ? '<div class="stamp">Paid</div>' : ''}
         <div class="t-actions">
-          <div class="row">${actions}</div>
+          <div class="row">${actions}<button class="ghost" onclick="openPay('${t.id}',null,true)">+ Past month</button></div>
           <div class="row">
             <button class="ghost" onclick="editTenant('${t.id}')">Edit</button>
             <button class="ghost" onclick="deleteTenant('${t.id}')">Delete</button>
@@ -546,6 +642,8 @@ function render(){
   }
 
   const curKey = currentCycleKey();
+  const rn = tenants.filter(t=>{ const i = agrInfo(t); return i && i.dr <= 30; });
+  document.getElementById('renewBox').innerHTML = rn.length ? '<div class="renew"><b>Agreement renewal &amp; rent increase</b><br>' + rn.map(t=>{ const i = agrInfo(t); return escapeHtml(t.name) + ' — ' + (i.dr<=0 ? '11 months done' : 'reminder in ' + i.dr + ' days') + ', agreement ends ' + formatDate(i.e); }).join('<br>') + '</div>' : '';
   const overdueCount = tenants.filter(t=> !isPaidThisCycle(t) && daysUntil(currentCycleDueDate(t))<0).length;
   const dueSoonCount = tenants.filter(t=>{ if(isPaidThisCycle(t)) return false; const d=daysUntil(currentCycleDueDate(t)); return d>=0 && d<=3; }).length;
   const paidCount = tenants.filter(t=>isPaidThisCycle(t)).length;
@@ -556,13 +654,24 @@ function render(){
     <div class="sum-card"><div class="n">${paidCount}</div><div class="l">Paid this month</div></div>
   `;
 
+  const mks = [...new Set([...payments.map(q=>q.month), curKey])].sort().reverse();
+  let tR = 0, tB = 0;
+  const mrows = mks.map(k=>{
+    const rec = payments.filter(q=>q.month===k).reduce((a,q)=>a+Number(q.amount),0);
+    let bak = 0; const who = [];
+    tenants.forEach(t=>{ const b = balFor(t,k); if(b>0){ bak += b; who.push(escapeHtml(t.name) + ' ' + rs(b)); } });
+    tR += rec; tB += bak;
+    return `<tr><td>${ml(k)}</td><td>${rs(rec)}</td><td class="${bak?'red':''}">${rs(bak)}</td><td class="${bak?'red':''}">${who.join(', ') || 'All paid'}</td></tr>`;
+  }).join('');
+  document.getElementById('monthBox').innerHTML = `<table class="history"><tr><th>Month</th><th>Received</th><th>Baki</th><th>Pending from</th></tr>${mrows}<tr><td><b>Total</b></td><td><b>${rs(tR)}</b></td><td class="${tB?'red':''}"><b>${rs(tB)}</b></td><td></td></tr></table>`;
+
   const historyBox = document.getElementById('historyBox');
   const sortedPayments = [...payments].sort((a,b)=> new Date(b.paidOn) - new Date(a.paidOn));
   if(sortedPayments.length === 0){
     historyBox.innerHTML = '<div class="empty">No payments recorded yet.</div>';
   } else {
     historyBox.innerHTML = `<table class="history">
-      <tr><th>Tenant</th><th>Cycle</th><th>Paid on</th><th>Amount</th><th></th></tr>
+      <tr><th>Tenant</th><th>For month</th><th>Date received</th><th>Amount</th><th></th></tr>
       ${sortedPayments.map(p=>{
         const t = tenants.find(x=>x.id===p.tenantId);
         const [y,m] = p.month.split('-');
@@ -572,15 +681,218 @@ function render(){
           <td>${cycleLabel}</td>
           <td>${formatDateISO(p.paidOn)}</td>
           <td>₹${Number(p.amount).toLocaleString('en-IN')}</td>
-          <td><button class="ghost" onclick="showReceipt('${p.id}')">Receipt</button> <button class="ghost" onclick="undoPaid('${p.id}')">Undo</button></td>
+          <td>${t ? `<button class="ghost" onclick="openPay('${t.id}','${p.id}')">Edit</button> ` : ''}<button class="ghost" onclick="showReceipt('${p.id}')">Receipt</button> <button class="ghost" onclick="undoPaid('${p.id}')">Undo</button></td>
         </tr>`;
       }).join('')}
     </table>`;
   }
 }
 
+let photoData = '';
+document.getElementById('fPhoto').addEventListener('change', e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const img = new Image();
+  img.onload = ()=>{ const c = document.createElement('canvas'); c.width = c.height = 160; const m = Math.min(img.width, img.height);
+    c.getContext('2d').drawImage(img, (img.width-m)/2, (img.height-m)/2, m, m, 0, 0, 160, 160); photoData = c.toDataURL('image/jpeg', .8); };
+  img.src = URL.createObjectURL(f);
+});
+function avatar(t){ return t.photo ? `<img class="av" src="${t.photo}" alt="">` : `<span class="av">${escapeHtml((t.name||'?').trim().charAt(0).toUpperCase())}</span>`; }
+function addMonths(d,n){ const x = new Date(d); x.setMonth(x.getMonth()+n); return x; }
+function agrInfo(t){
+  const st = t.agrStart || t.since; if(!st) return null;
+  const s = new Date(st + 'T00:00:00'), r = addMonths(s,11), e = addMonths(s,12);
+  return {s, r, e, dr: daysUntil(r)};
+}
+function agrLine(t){
+  const i = agrInfo(t); if(!i) return '';
+  let h = t.since ? '<div class="t-small">Staying since ' + formatDate(new Date(t.since + 'T00:00:00')) + '</div>' : '';
+  if(i.dr <= 30) h += `<div class="t-small red">${i.dr<=0 ? 'Agreement renewal due — 11 months done ' + formatDate(i.r) : 'Renewal reminder in ' + i.dr + ' days'} · ends ${formatDate(i.e)}</div>`;
+  return h;
+}
+function showProfile(id){
+  const t = tenants.find(x=>x.id===id); if(!t) return;
+  const i = agrInfo(t), n = new Date();
+  const stay = t.since ? (()=>{ const s = new Date(t.since + 'T00:00:00'); const m = (n.getFullYear()-s.getFullYear())*12 + n.getMonth()-s.getMonth(); return Math.floor(m/12) + ' yr ' + (m%12) + ' mo'; })() : '';
+  const row = (a,b)=> b ? `<div class="pr-row"><span>${a}</span><span style="text-align:right">${b}</span></div>` : '';
+  document.getElementById('prBody').innerHTML = `<div style="display:flex;gap:14px;align-items:center;margin-bottom:12px">${avatar(t).replace('class="av"','class="av" style="width:72px;height:72px;font-size:28px"')}<div><div style="font-family:'Fraunces',serif;font-size:22px">${escapeHtml(t.name)}</div><div class="t-small">+${escapeHtml(t.phone)}</div></div></div>
+    ${row('Flat / room', escapeHtml(t.flat||''))}${row('Staying since', t.since ? formatDate(new Date(t.since+'T00:00:00')) : '')}${row('Stayed for', stay)}
+    ${row('Monthly rent', rs(t.amount))}${row('Security deposit', t.deposit ? rs(t.deposit) : '')}
+    ${row('Agreement start', i ? formatDate(i.s) : '')}${row('Renewal reminder (11 mo)', i ? formatDate(i.r) : '')}${row('Agreement ends', i ? formatDate(i.e) : '')}
+    ${row('Renewal notice sent', t.noticeAt ? formatDateTimeISO(t.noticeAt) : '')}${row('Other details', escapeHtml(t.notes||'').replace(/\n/g,'<br>'))}`;
+  document.getElementById('prEdit').onclick = ()=>{ closeOv('prOv'); editTenant(id); };
+  document.getElementById('prRenew').onclick = ()=>renewTenant(id);
+  document.getElementById('prNotice').onclick = ()=>sendRenewal(id);
+  document.getElementById('prOv').classList.add('open');
+}
+function sendRenewal(id){
+  const t = tenants.find(x=>x.id===id), i = t && agrInfo(t);
+  if(!i){ alert('Add "Staying since" or "Agreement start" for this tenant first.'); return; }
+  const pct = prompt('Rent increase % for the new agreement (0 for none):', '5'); if(pct === null) return;
+  const nr = Math.round(Number(t.amount) * (1 + Number(pct||0)/100));
+  const msg = `Dear ${t.name}, your rental agreement (started ${formatDate(i.s)}) completes 11 months on ${formatDate(i.r)} and ends on ${formatDate(i.e)}. Let us renew it. Proposed rent from the new agreement: ${rs(nr)}` + (Number(pct) ? ` (+${pct}%)` : '') + '. Please confirm.';
+  t.noticeAt = new Date().toISOString(); saveData(); render();
+  window.open('https://wa.me/' + t.phone.replace(/[^0-9]/g,'') + '?text=' + encodeURIComponent(msg), '_blank');
+}
+function renewTenant(id){
+  const t = tenants.find(x=>x.id===id); if(!t) return;
+  const nr = prompt('New monthly rent for the renewed agreement (₹, applies from now):', t.amount); if(nr === null || !(Number(nr)>0)) return;
+  const n = new Date();
+  t.amount = String(Number(nr)); t.agrStart = n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0'); t.noticeAt = '';
+  saveData(); closeOv('prOv'); render();
+}
 document.getElementById('fMessage').value = DEFAULT_TEMPLATE;
-loadData();
+
+const SUPABASE_DIRECT = 'https://qdffscpoizgchyqsqqph.supabase.co';
+const SUPABASE_URL = (location.protocol.startsWith('http') && !/^(localhost|127\.)/.test(location.hostname)) ? location.origin + '/sb' : SUPABASE_DIRECT;
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkZmZzY3BvaXpnY2h5cXNxcXBoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTY4MzgsImV4cCI6MjEwNzg3MjgzOH0.a02eCSp1vYwcHkL4ueK_GnTkcWSWST0Vz_9Mmt3Vz7I';
+const sb = (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase) ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+let user = null, pushT = null;
+
+function togglePw(){
+  const inp = document.getElementById('authPass');
+  const btn = document.getElementById('pwToggle');
+  const show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  btn.textContent = show ? 'Hide' : 'Show';
+  btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+}
+
+function setAuthBusy(busy){
+  ['signinBtn','signupBtn','forgotBtn','pwToggle'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.disabled = busy;
+  });
+}
+
+function updateStorageNote(){
+  const el = document.getElementById('storageText');
+  if(!el) return;
+  if(user){
+    el.textContent = 'Synced to your cloud account + cached locally in this browser.';
+  } else if(sb){
+    el.textContent = 'Sign in to sync across devices; local cache stays in this browser.';
+  } else {
+    el.textContent = 'Saved in this browser only, on this device.';
+  }
+}
+
+function setSync(t){ const e = document.getElementById('syncSt'); if(e) e.textContent = t; }
+function cloudPush(){
+  if(!sb || !user) return;
+  clearTimeout(pushT); setSync('Saving…');
+  pushT = setTimeout(async ()=>{
+    const ts = localStorage.getItem(STORE_KEY + '.ts') || new Date().toISOString();
+    const {error} = await sb.from('ledgers').upsert({user_id: user.id, data: {tenants, payments, reminders, settings}, updated_at: ts});
+    setSync(error ? '⚠ Not synced' : '✓ Synced'); if(error) console.error(error);
+  }, 800);
+}
+
+async function startSession(u){
+  user = u; STORE_KEY = BASE_KEY + '.' + u.id;
+  updateStorageNote();
+  document.getElementById('authOv').classList.remove('open');
+  document.getElementById('userBar').innerHTML = escapeHtml(u.email) + ' · <span id="syncSt">Syncing…</span> <button class="ghost" onclick="logout()">Log out</button>';
+  loadData();
+  const {data, error} = await sb.from('ledgers').select('data,updated_at').eq('user_id', u.id).maybeSingle();
+  if(error){ setSync('⚠ Offline (using saved copy)'); return; }
+  const lts = new Date(localStorage.getItem(STORE_KEY + '.ts') || 0);
+  if(data && new Date(data.updated_at) > lts){
+    localStorage.setItem(STORE_KEY, JSON.stringify(data.data));
+    localStorage.setItem(STORE_KEY + '.ts', data.updated_at);
+    loadData(); setSync('✓ Synced');
+  } else {
+    const old = localStorage.getItem(BASE_KEY);
+    if(!data && !localStorage.getItem(STORE_KEY) && old && confirm('Data saved earlier on this browser was found. Move it into this account?')){
+      localStorage.setItem(STORE_KEY, old); loadData();
+    }
+    saveData();
+  }
+}
+
+async function authGo(signup){
+  const email = document.getElementById('authEmail').value.trim(), password = document.getElementById('authPass').value;
+  const msg = document.getElementById('authMsg');
+  msg.className = 'hint red';
+  msg.textContent = '';
+  if(!email || password.length < 6){ msg.textContent = 'Enter an email and a password of at least 6 characters.'; return; }
+  setAuthBusy(true);
+  msg.className = 'hint';
+  msg.textContent = signup ? 'Creating account…' : 'Signing in…';
+  try{
+    const r = signup ? await sb.auth.signUp({email, password}) : await sb.auth.signInWithPassword({email, password});
+    if(r.error){
+      const m = r.error.message || '';
+      msg.className = 'hint red';
+      msg.textContent = /already registered/i.test(m) ? 'This email already has an account. Use Sign in, or Forgot password.' : /invalid login/i.test(m) ? 'Wrong email or password. If you have no account yet, click Create account.' : /signups? not allowed|disabled/i.test(m) ? 'New sign-ups are turned off. Sign in with your existing account.' : m;
+      return;
+    }
+    if(signup && r.data.user && r.data.user.identities && r.data.user.identities.length === 0){
+      msg.className = 'hint red';
+      msg.textContent = 'This email already has an account. Use Sign in, or Forgot password.';
+      return;
+    }
+    if(!r.data.session){
+      msg.className = 'hint';
+      msg.textContent = 'Check your email to confirm the account, then sign in.';
+      return;
+    }
+    msg.textContent = '';
+    startSession(r.data.user);
+  }catch(e){
+    msg.className = 'hint red';
+    msg.textContent = 'Could not reach the server (' + (e.message || e) + '). Check your internet and try again.';
+  }finally{
+    setAuthBusy(false);
+  }
+}
+
+async function forgotPw(){
+  const email = document.getElementById('authEmail').value.trim(), msg = document.getElementById('authMsg');
+  if(!email){
+    msg.className = 'hint red';
+    msg.textContent = 'Type your email first, then click Forgot password.';
+    return;
+  }
+  setAuthBusy(true);
+  msg.className = 'hint';
+  msg.textContent = 'Sending reset link…';
+  try{
+    const {error} = await sb.auth.resetPasswordForEmail(email, {redirectTo: location.origin});
+    msg.className = error ? 'hint red' : 'hint';
+    msg.textContent = error ? error.message : 'If that email has an account, a reset link has been sent.';
+  }catch(e){
+    msg.className = 'hint red';
+    msg.textContent = 'Could not reach the server.';
+  }finally{
+    setAuthBusy(false);
+  }
+}
+
+if(sb) sb.auth.onAuthStateChange(async ev=>{
+  if(ev === 'PASSWORD_RECOVERY'){
+    const np = prompt('Enter a new password (min 6 characters):');
+    if(np && np.length >= 6){ const {error} = await sb.auth.updateUser({password: np}); alert(error ? error.message : 'Password updated. You are signed in.'); }
+  }
+});
+
+async function logout(){
+  user = null;
+  updateStorageNote();
+  if(sb) await sb.auth.signOut();
+  location.reload();
+}
+
+async function boot(){
+  updateStorageNote();
+  if(!sb){ loadData(); return; }
+  document.getElementById('authOv').classList.add('open');
+  const {data} = await sb.auth.getSession();
+  if(data.session) startSession(data.session.user);
+}
+
+document.getElementById('authEmail').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('authPass').focus(); });
+document.getElementById('authPass').addEventListener('keydown', e=>{ if(e.key==='Enter') authGo(false); });
+boot();
 </script>
 </body>
 </html>
