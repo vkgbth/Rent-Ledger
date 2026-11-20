@@ -23,6 +23,9 @@ Rent Ledger is a lightweight, single-page rent-management app for landlords. It 
 - Use separate Dashboard, Tenants, Money tracker, and About tabs.
 - View creator details and photo with direct call and WhatsApp contact buttons in About.
 - Show the creator and owner photo and name prominently in the front-page header.
+- Add direct LinkedIn, Instagram, Facebook, and email-suggestion links to the About developer card.
+- Edit phone numbers for Money tracker loans and liabilities. Indian mobile numbers are normalized to WhatsApp format, and supported browsers can select a saved device contact.
+- Edit Interest loans, including primary and separate secondary WhatsApp numbers. Choose a primary-only, secondary-only, or all-numbers recipient mode for the polite reminder; polite reminders include the scheduled monthly amount but do not expose principal or outstanding balances.
 - Download a JSON backup, or use the device share sheet to send it through WhatsApp or email when supported. Otherwise, attach the downloaded file manually.
 - Use browser-only storage, or sign in to sync a ledger through Supabase.
 - Install the responsive app on a phone's home screen as a PWA.
