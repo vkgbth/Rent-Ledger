@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rent-ledger-shell-v4';
+const CACHE_NAME = 'rent-ledger-shell-v7';
 const APP_SHELL = [
   './',
   './index.html',

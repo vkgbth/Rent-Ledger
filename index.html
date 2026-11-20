@@ -46,6 +46,11 @@
   }
   h1{font-family:'Fraunces',serif;font-weight:600;font-size:30px;margin:0;color:var(--green-deep);letter-spacing:-0.3px;}
   .header-right{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  .owner-credit{display:flex;align-items:center;gap:8px;margin-right:2px;}
+  .owner-credit img{width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid var(--gold-soft);box-shadow:0 2px 8px rgba(28,43,34,.12);}
+  .owner-credit div{display:grid;line-height:1.15;}
+  .owner-credit strong{font-size:12px;color:var(--green-deep);}
+  .owner-credit span{font-size:10px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.06em;}
   .month-tag{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.08em;}
   .storage-note{font-size:12px;color:var(--ink-soft);margin:8px 0 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
   .storage-note .links{display:flex;gap:14px;}
@@ -88,6 +93,13 @@
   .t-reminder .rem-count{font-family:'JetBrains Mono',monospace;color:var(--green-mid);font-weight:500;}
   .t-reminder ul{margin:6px 0 0;padding-left:16px;font-family:'JetBrains Mono',monospace;font-size:11.5px;}
   .t-reminder .none{font-style:italic;}
+  .receipt-sends{margin-top:4px;font-size:11.5px;color:var(--ink-soft);}
+  .money-receipt-paper{border:2px solid var(--green-deep);border-radius:6px;padding:16px;background:#fff;}
+  .money-receipt-paper h3{margin:0 0 4px;font-family:'Fraunces',serif;color:var(--green-deep);}
+  .money-receipt-grid{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:12px;border-top:1px solid var(--paper-line);padding-top:10px;font-size:13px;}
+  .money-receipt-grid strong{text-align:right;}
+  .daily-reminder-card{display:grid;gap:10px;margin-top:12px;border-top:1px solid var(--paper-line);padding-top:12px;}
+  .daily-reminder-actions{display:flex;gap:8px;flex-wrap:wrap;}
   .ov{display:none;position:fixed;inset:0;background:rgba(28,43,34,.55);z-index:50;align-items:center;justify-content:center;padding:16px;}
   .ov.open{display:flex;}
   .box{background:#fff;border-radius:8px;padding:20px;width:100%;max-width:420px;max-height:92vh;overflow:auto;}
@@ -250,6 +262,10 @@
   .attention-list{display:grid;gap:7px;}
   .attention-item{padding:9px 11px;border-radius:5px;background:#FBF3DD;font-size:12px;line-height:1.5;}
   .attention-item.overdue{background:#FBEFEC;color:var(--red-stamp);}
+  .reminder-history{margin-top:12px;border-top:1px solid var(--paper-line);padding-top:10px;}
+  .reminder-history summary{cursor:pointer;color:var(--green-deep);font-size:13px;font-weight:700;}
+  .reminder-history ul{margin:8px 0 0;padding:0;list-style:none;display:grid;gap:6px;}
+  .reminder-history li{display:flex;justify-content:space-between;gap:12px;padding:7px 9px;border-radius:5px;background:var(--cream);font-size:12px;}
   .money-form{margin:12px 0 20px;}
   .calculation-tool{padding:10px 12px;border:1px solid var(--paper-line);border-radius:6px;background:#FAF8F1;}
   .calculation-tool>summary{cursor:pointer;color:var(--green-mid);font-size:12px;font-weight:600;}
@@ -365,6 +381,9 @@
   @media (max-width:380px){
     body{padding-right:10px;padding-left:10px;}
     h1{font-size:24px;}
+    .owner-credit img{width:34px;height:34px;}
+    .owner-credit strong{font-size:11px;}
+    .owner-credit span{font-size:9px;}
     .header-right{max-width:100%;justify-content:flex-start;}
     .t-actions .row{grid-template-columns:1fr 1fr;}
   }
@@ -374,7 +393,13 @@
 <body>
 <div class="wrap">
   <header>
-    <h1>Rent ledger</h1>
+    <div style="display:flex;align-items:center;gap:10px">
+      <a class="owner-credit" href="#aboutView" onclick="return openOwnerFromHeader()" aria-label="About Vaibhav Kumar, creator and owner">
+        <img src="./assets/vaibhav-kumar.jpg" alt="Vaibhav Kumar, creator and owner of Rent Ledger">
+        <div><strong>Vaibhav Kumar</strong><span>Creator &amp; owner</span></div>
+      </a>
+      <h1>Rent ledger</h1>
+    </div>
     <div class="header-right">
       <span class="month-tag" id="monthTag"></span>
       <span id="userBar" style="font-size:12px"></span>
@@ -421,8 +446,22 @@
       </div>
       <div id="monthlyCollectionTracker" class="dashboard-card"></div>
       <div class="dashboard-card dashboard-attention">
-        <div class="dashboard-card-head"><h3>Due and outstanding</h3><button type="button" class="ghost" data-app-tab="moneyView">Open money tracker</button></div>
+        <div class="dashboard-card-head"><h3>Due and outstanding</h3><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="ghost" id="dashboardReminderLink" onclick="toggleDashboardReminderHistory()">Reminders (0)</button><button type="button" class="ghost" data-app-tab="moneyView">Open money tracker</button></div></div>
         <div id="dashboardAttention"></div>
+        <div id="dashboardReminderHistory"></div>
+        <div class="daily-reminder-card">
+          <h3 style="font-size:15px;margin:0">Daily due summary</h3>
+          <p class="money-help" style="margin:0">Send your due summary manually, or enable a browser notification while this app is open.</p>
+          <div class="form-grid">
+            <div class="field"><label for="ownerEmail">Your email</label><input id="ownerEmail" type="email" placeholder="you@example.com"></div>
+            <div class="field"><label for="ownerPhone">Your WhatsApp number</label><input id="ownerPhone" type="tel" placeholder="919835012345"></div>
+          </div>
+          <div class="daily-reminder-actions">
+            <button type="button" class="ghost" onclick="sendDailyDueEmail()">Email due summary</button>
+            <button type="button" class="ghost" onclick="sendDailyDueWhatsApp()">WhatsApp due summary</button>
+            <button type="button" onclick="enableDailyBrowserReminder()">Enable browser reminder</button>
+          </div>
+        </div>
       </div>
     </section>
   </div>
@@ -457,6 +496,10 @@
         <div class="field">
           <label for="fPhone">WhatsApp number (country code, no + or spaces)</label>
           <input id="fPhone" placeholder="919835012345">
+        </div>
+        <div class="field full">
+          <label for="fPhoneSecondary">Secondary WhatsApp numbers (optional)</label>
+          <input id="fPhoneSecondary" placeholder="919000000001, 919000000002">
         </div>
         <div class="field">
           <label for="fAmount">Monthly rent (₹)</label>
@@ -510,6 +553,10 @@
               <div class="field">
                 <label for="moneyOwedPhone">WhatsApp number (optional)</label>
                 <input id="moneyOwedPhone" type="tel" inputmode="tel" maxlength="20" placeholder="Country code + number">
+              </div>
+              <div class="field">
+                <label for="moneyOwedSecondaryPhone">Secondary WhatsApp numbers (optional)</label>
+                <input id="moneyOwedSecondaryPhone" type="tel" maxlength="100" placeholder="919000000001, 919000000002">
               </div>
             <div class="field full">
               <label for="moneyOwedDescription">Description / reason</label>
@@ -573,6 +620,14 @@
                   <input id="liabilityStartMonth" type="month">
                 </div>
               </div>
+              <div class="field">
+                <label for="liabilityPhone">WhatsApp number (optional)</label>
+                <input id="liabilityPhone" type="tel" maxlength="20" placeholder="Country code + number">
+              </div>
+              <div class="field">
+                <label for="liabilitySecondaryPhone">Secondary WhatsApp numbers (optional)</label>
+                <input id="liabilitySecondaryPhone" type="tel" maxlength="100" placeholder="919000000001, 919000000002">
+              </div>
             </div>
             <div class="field full">
               <label for="liabilityDescription">Description / reason</label>
@@ -623,6 +678,10 @@
           <div class="field">
             <label for="interestPhone">WhatsApp number (optional)</label>
             <input id="interestPhone" type="tel" inputmode="tel" maxlength="20" placeholder="Country code + number">
+          </div>
+          <div class="field">
+            <label for="interestSecondaryPhone">Secondary WhatsApp numbers (optional)</label>
+            <input id="interestSecondaryPhone" type="tel" maxlength="100" placeholder="919000000001, 919000000002">
           </div>
           <div class="field full">
             <label for="interestDescription">Description / reason</label>
@@ -733,6 +792,7 @@
   <div class="form-grid">
     <div class="field"><label for="moneyPaymentAmount">Amount (₹)</label><input id="moneyPaymentAmount" type="number" min="0.01" step="0.01"></div>
     <div class="field"><label for="moneyPaymentDate">Date</label><input id="moneyPaymentDate" type="date"></div>
+    <div class="field"><label for="moneyPaymentTime">Time</label><input id="moneyPaymentTime" type="time"></div>
     <div class="field" id="moneyPaymentMonthField"><label for="moneyPaymentMonth">Applies to month</label><input id="moneyPaymentMonth" type="month"></div>
     <div class="field full"><label for="moneyPaymentNote">Note (optional)</label><input id="moneyPaymentNote" maxlength="200"></div>
   </div>
@@ -743,6 +803,7 @@
   <div class="hint" id="interestPaymentHint" style="margin:0 0 12px"></div>
   <div class="form-grid">
     <div class="field"><label for="interestPaymentDate">Date received</label><input id="interestPaymentDate" type="date"></div>
+    <div class="field"><label for="interestPaymentTime">Time received</label><input id="interestPaymentTime" type="time"></div>
     <div class="field"><label for="interestPaymentInterest">Interest received (₹)</label><input id="interestPaymentInterest" type="number" min="0" step="0.01"></div>
     <div class="field"><label for="interestPaymentPrincipal">Principal returned (₹)</label><input id="interestPaymentPrincipal" type="number" min="0" step="0.01"></div>
     <div class="field full"><label for="interestPaymentNote">Note (optional)</label><input id="interestPaymentNote" maxlength="200"></div>
@@ -781,6 +842,14 @@
   <div id="rcCard"></div>
   <div class="field noprint" style="margin-top:12px"><label>Issued by (your name, saved for next time)</label><input id="rcBy"></div>
   <div class="form-actions noprint" style="flex-wrap:wrap"><button class="ghost" onclick="closeOv('rcOv')">Close</button><button class="ghost" onclick="window.print()">Print / PDF</button><button class="ghost" onclick="rcCopy()">Copy</button><button onclick="rcWa()">Send on WhatsApp</button></div>
+</div></div>
+<div class="ov" id="moneyReceiptOv"><div class="box" role="dialog" aria-modal="true" aria-labelledby="moneyReceiptTitle">
+  <div id="moneyReceiptCard"></div>
+  <div class="form-actions noprint" style="flex-wrap:wrap">
+    <button type="button" class="ghost" onclick="closeOv('moneyReceiptOv')">Close</button>
+    <button type="button" class="ghost" onclick="window.print()">Print / save PDF</button>
+    <button type="button" id="moneyReceiptSend" onclick="sendMoneyReceipt()">Send receipt on WhatsApp</button>
+  </div>
 </div></div>
 
 <script>
@@ -841,11 +910,6 @@ function saveData(){
 }
 
 function cleanupOldPayments(){
-  const now = new Date();
-  const cutoff = new Date(now.getFullYear(), now.getMonth()-2, now.getDate());
-  const before = payments.length + reminders.length;
-  reminders = reminders.filter(r => new Date(r.sentAt) >= cutoff);
-  if(payments.length + reminders.length !== before) saveData();
   let ch = false;
   [...payments].filter(p=>!p.receiptNo).sort((a,b)=>new Date(a.paidOn)-new Date(b.paidOn)).forEach(p=>{ p.receiptNo = nextNo(); ch = true; });
   if(ch) saveData();
@@ -854,6 +918,21 @@ function nextNo(){ settings.seq = (settings.seq||0) + 1; return 'R-' + String(se
 const rs = n => '₹' + Number(n).toLocaleString('en-IN');
 function cyclePays(t,m){ return payments.filter(p=>p.tenantId===t.id && p.month===(m||currentCycleKey())); }
 function paidSum(t,m){ return cyclePays(t,m).reduce((s,p)=>s+Number(p.amount),0); }
+function tenantPhones(t){
+  if(!t) return [];
+  const phones=[];
+  [t.phone,...(Array.isArray(t.secondaryPhones)?t.secondaryPhones:[])].forEach(phone=>{
+    const normalized=String(phone||'').replace(/[^0-9]/g,'');
+    if(normalized.length>=7 && normalized.length<=15 && !phones.includes(normalized)) phones.push(normalized);
+  });
+  return phones;
+}
+function openWhatsAppToTenant(t,message){
+  const phones=tenantPhones(t);
+  if(!phones.length){ alert('Add a valid WhatsApp number for this tenant.'); return false; }
+  phones.forEach((phone,index)=>setTimeout(()=>window.open('https://wa.me/'+phone+'?text='+encodeURIComponent(message),'_blank'),index*150));
+  return true;
+}
 function balanceOf(t,m){ return balFor(t, m||currentCycleKey()); }
 function rentFor(t,m){ const x = payments.find(q=>q.tenantId===t.id && q.month===m && q.rent); return (m===currentCycleKey() || !x) ? Number(t.amount) : Number(x.rent); }
 function balFor(t,m,ex){ return Math.max(0, rentFor(t,m) - cyclePays(t,m).filter(q=>q.id!==ex).reduce((s,q)=>s+Number(q.amount),0)); }
@@ -883,6 +962,13 @@ function formatDate(d){ return d.getDate() + ' ' + monthNames[d.getMonth()].slic
 function formatDateISO(iso){ return formatDate(new Date(iso)); }
 function formatTime(d){ return d.toLocaleTimeString('en-IN', {hour:'numeric', minute:'2-digit', hour12:true}); }
 function formatDateTimeISO(iso){ const d = new Date(iso); return formatDate(d) + ', ' + formatTime(d); }
+function formatPaymentDateTime(payment){
+  if(payment && payment.dateTime){
+    const date=new Date(payment.dateTime);
+    if(!Number.isNaN(date.getTime())) return formatDate(date)+', '+formatTime(date);
+  }
+  return payment&&validDateKey(payment.date)?displayDateKey(payment.date):'';
+}
 function remindersThisCycle(t){
   return reminders
     .filter(r => r.tenantId === t.id && r.month === currentCycleKey())
@@ -901,6 +987,7 @@ function resetForm(){
   document.getElementById('formTitle').textContent = 'Add a tenant';
   document.getElementById('fName').value = '';
   document.getElementById('fPhone').value = '';
+  document.getElementById('fPhoneSecondary').value = '';
   document.getElementById('fAmount').value = '';
   document.getElementById('fDueDay').value = '';
   ['fFlat','fSince','fAgr','fDeposit','fNotes','fPhoto'].forEach(i=>document.getElementById(i).value='');
@@ -916,6 +1003,7 @@ function editTenant(id){
   document.getElementById('formTitle').textContent = 'Edit tenant';
   document.getElementById('fName').value = t.name;
   document.getElementById('fPhone').value = t.phone;
+  document.getElementById('fPhoneSecondary').value = Array.isArray(t.secondaryPhones)?t.secondaryPhones.join(', ') : '';
   document.getElementById('fAmount').value = t.amount;
   document.getElementById('fDueDay').value = t.dueDay;
   document.getElementById('fFlat').value = t.flat||''; document.getElementById('fSince').value = t.since||'';
@@ -991,7 +1079,6 @@ function sendReminder(id,month){
   if(!t) return;
   const selectedMonth=validMonthKey(month)?month:currentCycleKey();
   const msg = buildMessage(t,selectedMonth);
-  const url = 'https://wa.me/' + t.phone.replace(/[^0-9]/g,'') + '?text=' + encodeURIComponent(msg);
   reminders.push({
     id: 'r_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
     tenantId: id,
@@ -999,7 +1086,7 @@ function sendReminder(id,month){
     sentAt: new Date().toISOString()
   });
   saveData();
-  window.open(url, '_blank');
+  openWhatsAppToTenant(t,msg);
   render();
 }
 
@@ -1102,14 +1189,19 @@ function renderRc(){
     <table><tr><td>Rent for ${monthNames[Number(m)-1]} ${y}</td><td>${rs(f.rent)}</td></tr>
     <tr><td>Total paid so far</td><td>${rs(f.till)}</td></tr>
     <tr><td><b>Balance due</b></td><td><b>${f.bal > 0 ? rs(f.bal) : 'Nil — paid in full'}</b></td></tr></table>
-    ${settings.issuedBy ? '<div class="t-small" style="margin-top:12px">Issued by ' + escapeHtml(settings.issuedBy) + '</div>' : ''}</div>`;
+    ${settings.issuedBy ? '<div class="t-small" style="margin-top:12px">Issued by ' + escapeHtml(settings.issuedBy) + '</div>' : ''}
+    <div class="receipt-sends">Receipt sent ${(Array.isArray(p.receiptSends)?p.receiptSends.length:0)} time(s)</div></div>`;
 }
 document.getElementById('rcBy').addEventListener('input', e=>{ settings.issuedBy = e.target.value.trim(); saveData(); renderRc(); });
 function rcCopy(){ const p = payments.find(x=>x.id===rcPid); if(p) navigator.clipboard.writeText(rcText(p)).then(()=>alert('Receipt copied.')); }
 function rcWa(){
   const p = payments.find(x=>x.id===rcPid); if(!p) return;
   const t = tenants.find(x=>x.id===p.tenantId);
-  window.open('https://wa.me/' + (t ? t.phone.replace(/[^0-9]/g,'') : '') + '?text=' + encodeURIComponent(rcText(p)), '_blank');
+  if(!Array.isArray(p.receiptSends)) p.receiptSends=[];
+  p.receiptSends.push({sentAt:new Date().toISOString()});
+  saveData();
+  openWhatsAppToTenant(t,rcText(p));
+  renderRc();
 }
 
 function undoPaid(paymentId){
@@ -1123,6 +1215,8 @@ function undoPaid(paymentId){
 document.getElementById('saveTenant').addEventListener('click', ()=>{
   const name = document.getElementById('fName').value.trim();
   const phone = document.getElementById('fPhone').value.trim();
+  const secondaryPhones = document.getElementById('fPhoneSecondary').value
+    .split(/[,;\n]/).map(value=>value.replace(/[^0-9]/g,'')).filter(value=>value.length>=7 && value.length<=15);
   const amount = document.getElementById('fAmount').value;
   const dueDay = document.getElementById('fDueDay').value;
   const message = document.getElementById('fMessage').value.trim() || DEFAULT_TEMPLATE;
@@ -1133,13 +1227,15 @@ document.getElementById('saveTenant').addEventListener('click', ()=>{
     alert('Fill in name, WhatsApp number, rent amount, and due day.');
     return;
   }
+  if(phone.replace(/[^0-9]/g,'').length<7){ alert('Enter a valid primary WhatsApp number.'); return; }
+  if(secondaryPhones.length===0 && document.getElementById('fPhoneSecondary').value.trim()){ alert('Enter valid secondary WhatsApp numbers separated by commas.'); return; }
   if(editingId){
     const t = tenants.find(x=>x.id===editingId);
-    Object.assign(t, {name, phone, amount, dueDay, message}, ex);
+    Object.assign(t, {name, phone, secondaryPhones, amount, dueDay, message}, ex);
   } else {
     tenants.push({
       id: 't_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
-      name, phone, amount, dueDay, message, ...ex
+      name, phone, secondaryPhones, amount, dueDay, message, ...ex
     });
   }
   saveData();
@@ -1182,6 +1278,8 @@ function openInterestPayment(id){
   interestPaymentTarget=id;
   document.getElementById('interestPaymentTitle').textContent='Record payment · '+record.person;
   document.getElementById('interestPaymentDate').value=todayDateKey();
+  const now=new Date();
+  document.getElementById('interestPaymentTime').value=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
   document.getElementById('interestPaymentInterest').value='';
   document.getElementById('interestPaymentPrincipal').value='';
   document.getElementById('interestPaymentNote').value='';
@@ -1200,6 +1298,8 @@ function saveInterestPayment(){
   const record=interestLoans.find(item=>item.id===interestPaymentTarget);
   if(!record) return;
   const date=document.getElementById('interestPaymentDate').value;
+  const time=document.getElementById('interestPaymentTime').value||'12:00';
+  const dateTime=date+'T'+time+':00';
   const interestAmount=Number(document.getElementById('interestPaymentInterest').value)||0;
   const principalAmount=Number(document.getElementById('interestPaymentPrincipal').value)||0;
   const note=document.getElementById('interestPaymentNote').value.trim();
@@ -1218,7 +1318,7 @@ function saveInterestPayment(){
     return;
   }
   if(!Array.isArray(record.payments)) record.payments=[];
-  record.payments.push({id:moneyId('ip'),date,interestAmount,principalAmount,note});
+  record.payments.push({id:moneyId('ip'),date,dateTime,interestAmount,principalAmount,note,receiptSends:[]});
   interestPaymentTarget=null;
   closeOv('interestPaymentOv');
   saveData();
@@ -1226,6 +1326,8 @@ function saveInterestPayment(){
 }
 document.getElementById('interestPaymentDate').addEventListener('change',updateInterestPaymentHint);
 document.getElementById('interestLoanList').addEventListener('click',event=>{
+  const receiptButton=event.target instanceof Element?event.target.closest('button[data-interest-receipt-id]'):null;
+  if(receiptButton){ openInterestPaymentReceipt(receiptButton.dataset.interestRecordId,receiptButton.dataset.interestReceiptId); return; }
   const button=event.target instanceof Element?event.target.closest('button[data-interest-action]'):null;
   if(!button) return;
   const id=button.dataset.interestId;
@@ -1326,6 +1428,8 @@ function openMoneyPayment(kind,id){
   document.getElementById('moneyPaymentTitle').textContent = isLiability ? 'Record liability payment · '+record.person : 'Record collection · '+record.person;
   document.getElementById('moneyPaymentAmount').value = '';
   document.getElementById('moneyPaymentDate').value = todayDateKey();
+  const now = new Date();
+  document.getElementById('moneyPaymentTime').value = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
   document.getElementById('moneyPaymentNote').value = '';
   document.getElementById('moneyPaymentMonthField').hidden = !isLiability;
   document.getElementById('moneyPaymentMonth').value = document.getElementById('liabilityMonth').value || currentCycleKey();
@@ -1349,6 +1453,8 @@ function saveMoneyPayment(){
   if(!moneyPaymentTarget) return;
   const amount = Number(document.getElementById('moneyPaymentAmount').value);
   const date = document.getElementById('moneyPaymentDate').value;
+  const time = document.getElementById('moneyPaymentTime').value || '12:00';
+  const dateTime = date+'T'+time+':00';
   const note = document.getElementById('moneyPaymentNote').value.trim();
   if(!(amount>0) || !validDateKey(date)){ alert('Enter a valid payment amount and date.'); return; }
   const {kind,id} = moneyPaymentTarget;
@@ -1357,7 +1463,7 @@ function saveMoneyPayment(){
     if(!record) return;
     if(amount>moneyOutstanding(record)){ alert('The collection cannot be more than the remaining amount of '+rs(moneyOutstanding(record))+'.'); return; }
     if(!Array.isArray(record.payments)) record.payments = [];
-    record.payments.push({id:moneyId('c'),amount,date,note});
+    record.payments.push({id:moneyId('c'),amount,date,dateTime,note,receiptSends:[]});
   }else{
     const record = liabilities.find(item=>item.id===id);
     const month = document.getElementById('moneyPaymentMonth').value;
@@ -1365,7 +1471,7 @@ function saveMoneyPayment(){
     const outstanding = liabilityBalanceThrough(record,month);
     if(amount>outstanding){ alert('The payment cannot be more than the outstanding amount of '+rs(outstanding)+' for '+monthLabel(month)+'.'); return; }
     if(!Array.isArray(record.payments)) record.payments = [];
-    record.payments.push({id:moneyId('lp'),amount,date,month,note});
+    record.payments.push({id:moneyId('lp'),amount,date,dateTime,month,note,receiptSends:[]});
     document.getElementById('liabilityMonth').value = month;
   }
   moneyPaymentTarget = null;
@@ -1416,11 +1522,21 @@ function setupMoneyForms(){
   document.getElementById('dashboardMonth').value = currentCycleKey();
   updateLiabilityFrequency();
   resetCalculationTool();
+  document.getElementById('ownerEmail').value=settings.ownerEmail||'';
+  document.getElementById('ownerPhone').value=settings.ownerPhone||'';
 }
 document.getElementById('moneyPaymentMonth').addEventListener('change',updateMoneyPaymentHint);
 document.getElementById('liabilityFrequency').addEventListener('change',updateLiabilityFrequency);
 document.getElementById('liabilityMonth').addEventListener('change',renderLiabilityMonth);
 document.getElementById('dashboardMonth').addEventListener('change',renderDashboard);
+document.getElementById('ownerEmail').addEventListener('change',()=>{
+  settings.ownerEmail=document.getElementById('ownerEmail').value.trim();
+  saveData();
+});
+document.getElementById('ownerPhone').addEventListener('change',()=>{
+  settings.ownerPhone=document.getElementById('ownerPhone').value.replace(/[^0-9]/g,'');
+  saveData();
+});
 document.getElementById('monthlyCollectionTracker').addEventListener('click',event=>{
   const button=event.target instanceof Element ? event.target.closest('button[data-tracker-action]') : null;
   if(!button) return;
@@ -1434,6 +1550,7 @@ document.getElementById('moneyOwedForm').addEventListener('submit',event=>{
   const amount=Number(document.getElementById('moneyOwedAmount').value);
   const expectedDate=document.getElementById('moneyOwedDate').value;
   const phone=document.getElementById('moneyOwedPhone').value.replace(/[^0-9]/g,'');
+  const secondaryPhones=(document.getElementById('moneyOwedSecondaryPhone').value||'').split(/[,;\n]/).map(value=>value.replace(/[^0-9]/g,'')).filter(value=>value.length>=7 && value.length<=15);
   const description=document.getElementById('moneyOwedDescription').value.trim();
   if(!person || !(amount>0) || !validDateKey(expectedDate) || !description){ alert('Enter the person, amount, expected return date, and description.'); return; }
   if(phone && (phone.length<7 || phone.length>15)){ alert('Enter a valid WhatsApp number, including its country code, or leave it blank.'); return; }
@@ -1441,7 +1558,7 @@ document.getElementById('moneyOwedForm').addEventListener('submit',event=>{
     label:row.querySelector('.calculation-label').value.trim(),
     amount:Number(row.querySelector('.calculation-amount').value)||0
   })).filter(item=>item.label && item.amount>0);
-  moneyOwedToMe.push({id:moneyId('loan'),person,phone,amount,expectedDate,description,createdAt:new Date().toISOString(),payments:[],calculationItems,calculationPhoto:calculationPhotoData});
+  moneyOwedToMe.push({id:moneyId('loan'),person,phone,secondaryPhones,amount,expectedDate,description,createdAt:new Date().toISOString(),payments:[],reminders:[],calculationItems,calculationPhoto:calculationPhotoData});
   document.getElementById('moneyOwedForm').reset();
   resetCalculationTool();
   saveData();
@@ -1455,6 +1572,7 @@ document.getElementById('interestLoanForm').addEventListener('submit',event=>{
   const lentDate=document.getElementById('interestStartDate').value;
   const dueDate=document.getElementById('interestDueDate').value;
   const phone=document.getElementById('interestPhone').value.replace(/[^0-9]/g,'');
+  const secondaryPhones=(document.getElementById('interestSecondaryPhone').value||'').split(/[,;\n]/).map(value=>value.replace(/[^0-9]/g,'')).filter(value=>value.length>=7 && value.length<=15);
   const description=document.getElementById('interestDescription').value.trim();
   if(!person || !(principal>0) || !(monthlyAmount>0) || !validDateKey(lentDate) || !validDateKey(dueDate) || !description){
     alert('Enter the person, principal, monthly interest amount, lending date, principal due date, and description.');
@@ -1462,7 +1580,7 @@ document.getElementById('interestLoanForm').addEventListener('submit',event=>{
   }
   if(dueDate<lentDate){ alert('The principal due date cannot be before the lending date.'); return; }
   if(phone && (phone.length<7 || phone.length>15)){ alert('Enter a valid WhatsApp number, including its country code, or leave it blank.'); return; }
-  interestLoans.push({id:moneyId('interest'),person,principal,monthlyAmount,startMonth:dateMonthKey(lentDate),lentDate,dueDate,phone,description,createdAt:new Date().toISOString(),payments:[],reminders:[]});
+  interestLoans.push({id:moneyId('interest'),person,principal,monthlyAmount,startMonth:dateMonthKey(lentDate),lentDate,dueDate,phone,secondaryPhones,description,createdAt:new Date().toISOString(),payments:[],reminders:[]});
   document.getElementById('interestLoanForm').reset();
   saveData();
   render();
@@ -1472,9 +1590,11 @@ document.getElementById('liabilityForm').addEventListener('submit',event=>{
   const person=document.getElementById('liabilityPerson').value.trim();
   const amount=Number(document.getElementById('liabilityAmount').value);
   const frequency=document.getElementById('liabilityFrequency').value;
+  const phone=document.getElementById('liabilityPhone').value.replace(/[^0-9]/g,'');
+  const secondaryPhones=(document.getElementById('liabilitySecondaryPhone').value||'').split(/[,;\n]/).map(value=>value.replace(/[^0-9]/g,'')).filter(value=>value.length>=7 && value.length<=15);
   const description=document.getElementById('liabilityDescription').value.trim();
   if(!person || !(amount>0) || !description){ alert('Enter the person, amount, and description.'); return; }
-  const record={id:moneyId('liability'),person,amount,description,frequency,payments:[],createdAt:new Date().toISOString()};
+  const record={id:moneyId('liability'),person,phone,secondaryPhones,amount,description,frequency,payments:[],reminders:[],createdAt:new Date().toISOString()};
   if(frequency==='monthly'){
     const dueDay=Number(document.getElementById('liabilityDueDay').value);
     const startMonth=document.getElementById('liabilityStartMonth').value;
@@ -1497,15 +1617,30 @@ document.getElementById('liabilityForm').addEventListener('submit',event=>{
   render();
 });
 document.getElementById('moneyOwedList').addEventListener('click',event=>{
+  const receiptButton=event.target instanceof Element?event.target.closest('button[data-payment-receipt-id]'):null;
+  if(receiptButton){ openMoneyReceipt('loan',receiptButton.dataset.paymentRecordId,receiptButton.dataset.paymentReceiptId); return; }
   const button=event.target instanceof Element ? event.target.closest('button[data-money-action]') : null;
   if(!button) return;
   const id=button.dataset.moneyId;
   if(button.dataset.moneyAction==='collect'){ openMoneyPayment('loan',id); return; }
+  if(button.dataset.moneyAction==='remind-loan'){
+    const record=moneyOwedToMe.find(item=>item.id===id);
+    if(!record) return;
+    const message=['*Repayment reminder*','Person: '+record.person,'Original amount: '+rs(record.amount),'Remaining amount: '+rs(moneyOutstanding(record)),'Expected return date: '+displayDateKey(record.expectedDate),record.description?'Description: '+record.description:'','Please return the outstanding amount at your earliest convenience. Thank you.'].filter(Boolean).join('\n');
+    if(openWhatsAppToRecord(record,message)){
+      if(!Array.isArray(record.reminders)) record.reminders=[];
+      record.reminders.push({sentAt:new Date().toISOString()});
+      saveData(); render();
+    }
+    return;
+  }
   if(button.dataset.moneyAction==='delete-loan' && confirm('Delete this money-lent entry and its collection history?')){
     moneyOwedToMe=moneyOwedToMe.filter(record=>record.id!==id); saveData(); render();
   }
 });
 document.getElementById('liabilityList').addEventListener('click',event=>{
+  const receiptButton=event.target instanceof Element?event.target.closest('button[data-payment-receipt-id]'):null;
+  if(receiptButton){ openMoneyReceipt('liability',receiptButton.dataset.paymentRecordId,receiptButton.dataset.paymentReceiptId); return; }
   const button=event.target instanceof Element ? event.target.closest('button[data-money-action]') : null;
   if(!button) return;
   const id=button.dataset.moneyId;
@@ -1605,6 +1740,10 @@ function escapeHtml(s){
 function render(){
   const now = new Date();
   document.getElementById('monthTag').textContent = monthNames[now.getMonth()] + ' ' + now.getFullYear();
+  const ownerEmail=document.getElementById('ownerEmail');
+  const ownerPhone=document.getElementById('ownerPhone');
+  if(ownerEmail && document.activeElement!==ownerEmail && (!ownerEmail.value || settings.ownerEmail)) ownerEmail.value=settings.ownerEmail||ownerEmail.value;
+  if(ownerPhone && document.activeElement!==ownerPhone && (!ownerPhone.value || settings.ownerPhone)) ownerPhone.value=settings.ownerPhone||ownerPhone.value;
 
   const list = document.getElementById('tenantList');
   if(tenants.length === 0){
@@ -1651,15 +1790,20 @@ function render(){
         ? `<details class="t-reminder"><summary>Reminded <span class="rem-count">${rems.length}&times;</span> · last ${formatDateTimeISO(rems[0].sentAt)}</summary><ul>${rems.map(r=>'<li>'+formatDateTimeISO(r.sentAt)+'</li>').join('')}</ul></details>`
         : `<div class="t-reminder"><span class="none">No reminder sent this month</span></div>`;
 
-      const actions = paidRecord
-        ? `<button class="ghost" onclick="showReceipt('${paidRecord.id}')">Receipt</button>${totalBalance>0?`<button class="ghost" onclick="sendReminder('${t.id}')">Due reminder</button>`:''}<button class="ghost" onclick="undoPaid('${paidRecord.id}')">Undo last</button>`
-        : `<button onclick="sendReminder('${t.id}')">${rems.length ? 'Remind again' : 'Send reminder'}</button>
-           <button class="gold" onclick="openPay('${t.id}')">Record payment</button>`;
+      const paymentReceiptActions = cyclePays(t).slice().sort((a,b)=>String(b.paidOn||'').localeCompare(String(a.paidOn||''))).map(p=>{
+        const sendCount=Array.isArray(p.receiptSends)?p.receiptSends.length:0;
+        return `<button class="ghost" onclick="showReceipt('${p.id}')">Receipt ${sendCount?`(${sendCount})`:''}</button>`;
+      }).join('');
+      const actions = `${paymentReceiptActions}${totalBalance>0
+        ? `<button class="ghost" onclick="sendReminder('${t.id}')">${rems.length?'Remind again':'Due reminder'}</button>`
+        : rems.length ? `<button class="ghost" onclick="sendReminder('${t.id}')">Remind again</button>` : ''}
+        ${paidRecord?`<button class="ghost" onclick="undoPaid('${paidRecord.id}')">Undo last</button>`:''}
+        <button class="${paymentReceiptActions?'ghost':'gold'}" onclick="openPay('${t.id}')">Record payment</button>`;
 
       return `<div class="${rowClass}">
         <div class="t-main">
           <div class="t-head" onclick="showProfile('${t.id}')">${avatar(t)}<div><div class="t-name">${escapeHtml(t.name)}</div>
-          <div class="t-phone">+${escapeHtml(t.phone)}${t.flat ? ' · ' + escapeHtml(t.flat) : ''}</div></div></div>
+          <div class="t-phone">+${escapeHtml(t.phone)}${Array.isArray(t.secondaryPhones)&&t.secondaryPhones.length?' · +'+t.secondaryPhones.map(phone=>escapeHtml(phone)).join(' · +'):''}${t.flat ? ' · ' + escapeHtml(t.flat) : ''}</div></div></div>
           ${agrLine(t)}
           ${ps ? '<div class="t-small">Received: ' + cyclePays(t).map(q=>rs(q.amount)+' on '+formatDateISO(q.paidOn).slice(0,-5)).join(' · ') + '</div>' : ''}
           ${reminderHtml}
@@ -1841,6 +1985,21 @@ function monthLabel(month){
 function recordPayments(record){
   return record && Array.isArray(record.payments) ? record.payments : [];
 }
+function recordPhones(record){
+  if(!record) return [];
+  const phones=[];
+  [record.phone,...(Array.isArray(record.secondaryPhones)?record.secondaryPhones:[])].forEach(phone=>{
+    const normalized=String(phone||'').replace(/[^0-9]/g,'');
+    if(normalized.length>=7 && normalized.length<=15 && !phones.includes(normalized)) phones.push(normalized);
+  });
+  return phones;
+}
+function openWhatsAppToRecord(record,message){
+  const phones=recordPhones(record);
+  if(!phones.length){ alert('Add a valid WhatsApp number to this record.'); return false; }
+  phones.forEach((phone,index)=>setTimeout(()=>window.open('https://wa.me/'+phone+'?text='+encodeURIComponent(message),'_blank'),index*150));
+  return true;
+}
 function interestPaymentRecords(record){
   return record && Array.isArray(record.payments) ? record.payments : [];
 }
@@ -1905,13 +2064,124 @@ function paymentHistoryHtml(record){
   const history = recordPayments(record).slice().sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
   if(!history.length) return '';
   return `<details class="money-history"><summary>Payment history (${history.length})</summary>${history.map(payment=>`
-    <div class="money-history-item"><span>${displayDateKey(payment.date)}${payment.month ? ' · ' + escapeHtml(monthLabel(payment.month)) : ''}${payment.note ? ' · ' + escapeHtml(payment.note) : ''}</span><strong>${rs(payment.amount)}</strong></div>`).join('')}</details>`;
+    <div class="money-history-item"><span>${escapeHtml(formatPaymentDateTime(payment))}${payment.month ? ' · ' + escapeHtml(monthLabel(payment.month)) : ''}${payment.note ? ' · ' + escapeHtml(payment.note) : ''}</span><span><strong>${rs(payment.amount)}</strong> <button type="button" class="ghost" data-payment-receipt-id="${escapeHtml(payment.id||'')}" data-payment-record-id="${escapeHtml(record.id||'')}">Receipt ${(Array.isArray(payment.receiptSends)?payment.receiptSends.length:0)?`(${payment.receiptSends.length})`:''}</button></span></div>`).join('')}</details>`;
 }
+let moneyReceiptTarget=null;
+function openMoneyReceipt(recordKind,recordId,paymentId){
+  const recordKindName=recordKind==='loan'?'Money collected':'Money paid';
+  const record=recordKind==='loan'?moneyOwedToMe.find(item=>item.id===recordId):liabilities.find(item=>item.id===recordId);
+  const payment=record&&recordPayments(record).find(item=>item.id===paymentId);
+  if(!record || !payment) return;
+  moneyReceiptTarget={recordKind,recordId,paymentId};
+  const remaining=recordKind==='loan'?moneyOutstanding(record):liabilityBalanceThrough(record,validMonthKey(payment.month)?payment.month:currentCycleKey());
+  const sends=Array.isArray(payment.receiptSends)?payment.receiptSends.length:0;
+  document.getElementById('moneyReceiptCard').innerHTML=`<div class="money-receipt-paper">
+    <h3 id="moneyReceiptTitle">${escapeHtml(recordKindName)} receipt</h3>
+    <div class="t-small"><b>${escapeHtml(PROPERTY_NAME)}</b></div>
+    <div class="t-small">${escapeHtml(payment.id)} · ${escapeHtml(formatPaymentDateTime(payment))}${payment.month?' · '+escapeHtml(monthLabel(payment.month)):''}</div>
+    <div class="money-receipt-grid">
+      <span>${recordKind==='loan'?'Received from':'Paid to'}</span><strong>${escapeHtml(record.person||'Unnamed person')}</strong>
+      <span>${recordKind==='loan'?'Amount collected':'Amount paid'}</span><strong>${rs(payment.amount)}</strong>
+      ${payment.note?`<span>Note</span><strong>${escapeHtml(payment.note)}</strong>`:''}
+      <span>Balance remaining</span><strong>${rs(remaining)}</strong>
+      <span>Receipt sent</span><strong>${sends} time(s)</strong>
+    </div>
+  </div>`;
+  document.getElementById('moneyReceiptSend').textContent='Send receipt on WhatsApp';
+  document.getElementById('moneyReceiptSend').onclick=sendMoneyReceipt;
+  document.getElementById('moneyReceiptOv').classList.add('open');
+}
+function sendMoneyReceipt(){
+  if(!moneyReceiptTarget) return;
+  const {recordKind,recordId,paymentId}=moneyReceiptTarget;
+  const record=recordKind==='loan'?moneyOwedToMe.find(item=>item.id===recordId):liabilities.find(item=>item.id===recordId);
+  const payment=record&&recordPayments(record).find(item=>item.id===paymentId);
+  if(!record || !payment) return;
+  if(!Array.isArray(payment.receiptSends)) payment.receiptSends=[];
+  const remaining=recordKind==='loan'?moneyOutstanding(record):liabilityBalanceThrough(record,validMonthKey(payment.month)?payment.month:currentCycleKey());
+  const message=[
+    '*'+(recordKind==='loan'?'Payment Collection Receipt':'Payment Receipt')+'*',
+    'Property: '+PROPERTY_NAME,
+    (recordKind==='loan'?'Received from: ':'Paid to: ')+(record.person||'Unnamed person'),
+    'Amount: '+rs(payment.amount),
+    'Date and time: '+formatPaymentDateTime(payment),
+    payment.month?'For month: '+monthLabel(payment.month):'',
+    payment.note?'Note: '+payment.note:'',
+    'Balance remaining: '+rs(remaining),
+    'Receipt no: '+payment.id,
+    'Issued by: '+(settings.issuedBy||'Vaibhav Kumar')
+  ].filter(Boolean).join('\n');
+  if(!openWhatsAppToRecord(record,message)) return;
+  payment.receiptSends.push({sentAt:new Date().toISOString()});
+  saveData();
+  openMoneyReceipt(recordKind,recordId,paymentId);
+  render();
+}
+
+let interestReceiptTarget=null;
+function openInterestPaymentReceipt(recordId,paymentId){
+  const record=interestLoans.find(item=>item.id===recordId);
+  const payment=record&&interestPaymentRecords(record).find(item=>item.id===paymentId);
+  if(!record || !payment) return;
+  interestReceiptTarget={recordId,paymentId};
+  const asOfDate=payment.date;
+  const interestOutstanding=interestOutstandingThrough(record,asOfDate);
+  const principalOutstanding=interestPrincipalOutstandingThrough(record,asOfDate);
+  const sends=Array.isArray(payment.receiptSends)?payment.receiptSends.length:0;
+  document.getElementById('moneyReceiptCard').innerHTML=`<div class="money-receipt-paper">
+    <h3 id="moneyReceiptTitle">Interest loan receipt</h3>
+    <div class="t-small"><b>${escapeHtml(PROPERTY_NAME)}</b></div>
+    <div class="t-small">${escapeHtml(payment.id)} · ${escapeHtml(formatPaymentDateTime(payment))}</div>
+    <div class="money-receipt-grid">
+      <span>Person</span><strong>${escapeHtml(record.person||'Unnamed person')}</strong>
+      <span>Monthly interest fixed amount</span><strong>${rs(interestMonthlyAmount(record))}</strong>
+      <span>Interest received</span><strong>${rs(payment.interestAmount||0)}</strong>
+      <span>Principal returned</span><strong>${rs(payment.principalAmount||0)}</strong>
+      ${payment.note?`<span>Note</span><strong>${escapeHtml(payment.note)}</strong>`:''}
+      <span>Interest outstanding</span><strong>${rs(interestOutstanding)}</strong>
+      <span>Principal remaining</span><strong>${rs(principalOutstanding)}</strong>
+      <span>Receipt sent</span><strong>${sends} time(s)</strong>
+    </div>
+  </div>`;
+  document.getElementById('moneyReceiptSend').textContent='Send interest receipt on WhatsApp';
+  document.getElementById('moneyReceiptSend').onclick=sendInterestPaymentReceipt;
+  document.getElementById('moneyReceiptOv').classList.add('open');
+}
+function sendInterestPaymentReceipt(){
+  if(!interestReceiptTarget) return;
+  const {recordId,paymentId}=interestReceiptTarget;
+  const record=interestLoans.find(item=>item.id===recordId);
+  const payment=record&&interestPaymentRecords(record).find(item=>item.id===paymentId);
+  if(!record || !payment) return;
+  if(!Array.isArray(payment.receiptSends)) payment.receiptSends=[];
+  const interestOutstanding=interestOutstandingThrough(record,payment.date);
+  const principalOutstanding=interestPrincipalOutstandingThrough(record,payment.date);
+  const message=[
+    '*Interest Loan Receipt*',
+    'Property: '+PROPERTY_NAME,
+    'Person: '+(record.person||'Unnamed person'),
+    'Fixed monthly interest: '+rs(interestMonthlyAmount(record)),
+    'Interest received: '+rs(payment.interestAmount||0),
+    'Principal returned: '+rs(payment.principalAmount||0),
+    'Date and time: '+formatPaymentDateTime(payment),
+    payment.note?'Note: '+payment.note:'',
+    'Interest outstanding: '+rs(interestOutstanding),
+    'Principal remaining: '+rs(principalOutstanding),
+    'Receipt no: '+payment.id,
+    'Issued by: '+(settings.issuedBy||'Vaibhav Kumar')
+  ].filter(Boolean).join('\n');
+  if(!openWhatsAppToRecord(record,message)) return;
+  payment.receiptSends.push({sentAt:new Date().toISOString()});
+  saveData();
+  openInterestPaymentReceipt(recordId,paymentId);
+  render();
+}
+
 function interestPaymentHistoryHtml(record){
   const history=interestPaymentRecords(record).slice().sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
   if(!history.length) return '';
   return `<details class="money-history"><summary>Payment history (${history.length})</summary>${history.map(payment=>`
-    <div class="money-history-item"><span>${displayDateKey(payment.date)}${payment.note?' · '+escapeHtml(payment.note):''}</span><strong>Interest ${rs(payment.interestAmount||0)} · Principal ${rs(payment.principalAmount||0)}</strong></div>`).join('')}</details>`;
+    <div class="money-history-item"><span>${escapeHtml(formatPaymentDateTime(payment))}${payment.note?' · '+escapeHtml(payment.note):''}</span><span><strong>Interest ${rs(payment.interestAmount||0)} · Principal ${rs(payment.principalAmount||0)}</strong> <button type="button" class="ghost" data-interest-record-id="${escapeHtml(record.id||'')}" data-interest-receipt-id="${escapeHtml(payment.id||'')}">Receipt ${(Array.isArray(payment.receiptSends)?payment.receiptSends.length:0)?`(${payment.receiptSends.length})`:''}</button></span></div>`).join('')}</details>`;
 }
 function calculationHtml(record){
   const items = Array.isArray(record.calculationItems) ? record.calculationItems.filter(item=>item && typeof item==='object' && Number(item.amount)>0) : [];
@@ -1935,7 +2205,8 @@ function renderMoneyTracker(){
       <div class="money-entry-description">${escapeHtml(record.description||'')}</div>
       ${calculationHtml(record)}
       ${paymentHistoryHtml(record)}
-      <div class="money-entry-actions"><button type="button" class="gold" data-money-action="collect" data-money-id="${escapeHtml(record.id)}"${outstanding===0?' disabled':''}>Record collection</button><button type="button" class="ghost danger" data-money-action="delete-loan" data-money-id="${escapeHtml(record.id)}">Delete</button></div>
+      <div class="money-entry-meta">Reminders sent ${(Array.isArray(record.reminders)?record.reminders.length:0)}${record.secondaryPhones&&record.secondaryPhones.length?' · '+(recordPhones(record).length)+' WhatsApp numbers':''}</div>
+      <div class="money-entry-actions"><button type="button" class="ghost" data-money-action="remind-loan" data-money-id="${escapeHtml(record.id)}"${outstanding===0?' disabled':''}>Send reminder</button><button type="button" class="gold" data-money-action="collect" data-money-id="${escapeHtml(record.id)}"${outstanding===0?' disabled':''}>Record collection</button><button type="button" class="ghost danger" data-money-action="delete-loan" data-money-id="${escapeHtml(record.id)}">Delete</button></div>
     </article>`;
   }).join('') : '<div class="empty-state">No money lent has been added.</div>';
 
@@ -1998,7 +2269,8 @@ function renderInterestLoans(){
       <div class="money-entry-meta">Interest due through ${displayDateKey(asOfDate)} ${rs(interestDue)} · Interest paid ${rs(interestPaid)} · Interest outstanding ${rs(interestOutstanding)} · Principal remaining ${rs(principalOutstanding)}</div>
       ${record.phone?'': '<div class="money-help">No WhatsApp number saved; reminder sending is unavailable.</div>'}
       ${interestPaymentHistoryHtml(record)}
-      <div class="money-entry-actions"><button type="button" class="ghost" data-interest-action="notice" data-interest-id="${escapeHtml(record.id)}">Due statement</button><button type="button" class="gold" data-interest-action="payment" data-interest-id="${escapeHtml(record.id)}"${interestOutstanding===0&&principalOutstanding===0?' disabled':''}>Record payment</button><button type="button" class="ghost danger" data-interest-action="delete" data-interest-id="${escapeHtml(record.id)}">Delete</button></div>
+      <div class="money-entry-meta">Reminders sent ${(Array.isArray(record.reminders)?record.reminders.length:0)} · ${recordPhones(record).length} WhatsApp numbers</div>
+      <div class="money-entry-actions"><button type="button" class="ghost" data-interest-action="notice" data-interest-id="${escapeHtml(record.id)}">Due statement / reminder</button><button type="button" class="gold" data-interest-action="payment" data-interest-id="${escapeHtml(record.id)}"${interestOutstanding===0&&principalOutstanding===0?' disabled':''}>Record payment</button><button type="button" class="ghost danger" data-interest-action="delete" data-interest-id="${escapeHtml(record.id)}">Delete</button></div>
       <div class="t-small">${status}</div>
     </article>`;
   }).join(''):'<div class="empty-state">No interest loans have been added.</div>';
@@ -2085,9 +2357,9 @@ function openInterestDueNotice(id){
     <div class="due-notice-row"><span>Principal remaining · due ${escapeHtml(displayDateKey(loan.dueDate))}</span><strong>${rs(principalOutstanding)}</strong></div>
     <div class="due-notice-row due-notice-total"><span>Total outstanding</span><strong>${rs(interestOutstanding+principalOutstanding)}</strong></div>
     <p class="tracker-note">Monthly interest uses the fixed amount entered for this loan. This is a statement of the balance recorded in Rent Ledger.</p>`;
-  const phone=String(loan.phone||'').replace(/[^0-9]/g,'');
-  document.getElementById('dueNoticeSend').disabled=phone.length<7 || phone.length>15;
-  document.getElementById('dueNoticeSend').textContent=phone.length>=7&&phone.length<=15?'Send gentle reminder on WhatsApp':'Add a WhatsApp number to enable reminders';
+  const phones=recordPhones(loan);
+  document.getElementById('dueNoticeSend').disabled=!phones.length;
+  document.getElementById('dueNoticeSend').textContent=phones.length?'Send gentle reminder on WhatsApp':'Add a WhatsApp number to enable reminders';
   document.getElementById('dueNoticeOv').classList.add('open');
 }
 let dueNoticeTarget=null;
@@ -2120,8 +2392,6 @@ function sendDueNotice(){
   if(target.kind==='interest'){
     const loan=interestLoans.find(item=>item.id===target.id);
     if(!loan) return;
-    const phone=String(loan.phone||'').replace(/[^0-9]/g,'');
-    if(phone.length<7 || phone.length>15){ alert('Add a valid WhatsApp number to this interest loan before sending a reminder.'); return; }
     const asOfDate=todayDateKey();
     const interestDue=interestDueThrough(loan,asOfDate);
     const interestOutstanding=interestOutstandingThrough(loan,asOfDate);
@@ -2136,10 +2406,11 @@ function sendDueNotice(){
       'Total outstanding: '+rs(interestOutstanding+principalOutstanding),
       'Please let me know when you expect to make the payment. Thank you.'].join('\n');
     if(!Array.isArray(loan.reminders)) loan.reminders=[];
-    loan.reminders.push({sentAt:new Date().toISOString()});
-    saveData();
-    window.open('https://wa.me/'+phone+'?text='+encodeURIComponent(message),'_blank');
-    render();
+    if(openWhatsAppToRecord(loan,message)){
+      loan.reminders.push({sentAt:new Date().toISOString()});
+      saveData();
+      render();
+    }
     return;
   }
   const loan=moneyOwedToMe.find(item=>item.id===target.id);
@@ -2156,6 +2427,7 @@ function sendDueNotice(){
   loan.reminders.push({month:target.month,sentAt:new Date().toISOString()});
   saveData();
   window.open('https://wa.me/'+phone+'?text='+encodeURIComponent(message),'_blank');
+  render();
 }
 function renderMonthlyCollectionTracker(month){
   const asOfDate=monthAsOfDate(month);
@@ -2182,7 +2454,8 @@ function renderMonthlyCollectionTracker(month){
     }else if(currentBalance>0 && received>0){
       status='Part-paid';
     }
-    return `<tr><td>${escapeHtml(tenant.name)}</td><td class="amount">${rs(rent)}</td><td class="amount">${rs(received)}</td><td class="amount">${rs(pastBalance)}</td><td class="amount">${rs(totalBalance)}</td><td class="status ${statusClass}">${status}</td><td>${overdueEntries.length?`<button type="button" class="tracker-action" data-tracker-action="rent-notice" data-record-id="${escapeHtml(tenant.id)}">Due receipt</button>`:''}</td></tr>`;
+    const reminderCount=reminders.filter(reminder=>reminder.tenantId===tenant.id && reminder.month===month).length;
+    return `<tr><td>${escapeHtml(tenant.name)}</td><td class="amount">${rs(rent)}</td><td class="amount">${rs(received)}</td><td class="amount">${rs(pastBalance)}</td><td class="amount">${rs(totalBalance)}</td><td class="amount">${reminderCount}</td><td class="status ${statusClass}">${status}</td><td>${overdueEntries.length?`<button type="button" class="tracker-action" data-tracker-action="rent-notice" data-record-id="${escapeHtml(tenant.id)}">Due receipt</button>`:''}</td></tr>`;
   }).join('');
   const selectedOrdinal=monthOrdinal(month);
   const loanRows=moneyOwedToMe.filter(loan=>loan && typeof loan==='object').filter(loan=>{
@@ -2198,7 +2471,8 @@ function renderMonthlyCollectionTracker(month){
     const paidOnTime=moneyPaidByDate(loan,loan.expectedDate)>=Number(loan.amount||0);
     const status=balance===0?(paidOnTime?'Paid on time':'Paid late'):overdue?'Overdue':validDateKey(loan.expectedDate)&&loan.expectedDate>selectedDate?'Upcoming':'Outstanding';
     const phone=String(loan.phone||'').replace(/[^0-9]/g,'');
-    return `<tr><td>${escapeHtml(loan.person||'Unnamed person')}</td><td class="amount">${rs(expected)}</td><td class="amount">${rs(collected)}</td><td class="amount">${rs(balance)}</td><td class="status ${balance===0?'paid':overdue?'overdue':''}">${status}</td><td>${overdue&&phone.length>=7&&phone.length<=15?`<button type="button" class="tracker-action" data-tracker-action="loan-notice" data-record-id="${escapeHtml(loan.id)}">Due receipt</button>`:''}</td></tr>`;
+    const reminderCount=Array.isArray(loan.reminders)?loan.reminders.filter(reminder=>!reminder.month||reminder.month===month).length:0;
+    return `<tr><td>${escapeHtml(loan.person||'Unnamed person')}</td><td class="amount">${rs(expected)}</td><td class="amount">${rs(collected)}</td><td class="amount">${rs(balance)}</td><td class="amount">${reminderCount}</td><td class="status ${balance===0?'paid':overdue?'overdue':''}">${status}</td><td>${overdue&&phone.length>=7&&phone.length<=15?`<button type="button" class="tracker-action" data-tracker-action="loan-notice" data-record-id="${escapeHtml(loan.id)}">Due receipt</button>`:''}</td></tr>`;
   }).join('');
   const liabilityRows=liabilities.filter(record=>{
     return liabilityScheduledForMonth(record,month)>0 || liabilityBalanceThrough(record,month)>0 || liabilityPaidInMonth(record,month)>0;
@@ -2213,10 +2487,38 @@ function renderMonthlyCollectionTracker(month){
   const table=(headers,rows,empty)=>`<div class="tracker-table-wrap"><table class="tracker-table"><thead><tr>${headers.map(header=>`<th>${header}</th>`).join('')}</tr></thead><tbody>${rows||`<tr><td colspan="${headers.length}">${empty}</td></tr>`}</tbody></table></div>`;
   document.getElementById('monthlyCollectionTracker').innerHTML=`<div class="dashboard-card-head"><h3>Monthly collection tracker · ${escapeHtml(monthLabel(month))}</h3></div>
     <p class="tracker-note">Compare each month's due amount, money received, and outstanding balance. Rent due receipts include the property name and can be printed or shared as a WhatsApp text reminder.</p>
-    <div class="tracker-section"><h4>Tenant rent</h4>${table(['Tenant','Rent this month','Received','Past due','Total outstanding','Status',''],tenantRows,'No tenants started in this month.')}</div>
-    <div class="tracker-section"><h4>Money owed to you</h4>${table(['Person','Expected','Collected','Outstanding','Status',''],loanRows,'No loan return or collection activity for this month.')}</div>
+    <div class="tracker-section"><h4>Tenant rent</h4>${table(['Tenant','Rent this month','Received','Past due','Total outstanding','Reminders sent','Status',''],tenantRows,'No tenants started in this month.')}</div>
+    <div class="tracker-section"><h4>Money owed to you</h4>${table(['Person','Expected','Collected','Outstanding','Reminders sent','Status',''],loanRows,'No loan return or collection activity for this month.')}</div>
     <div class="tracker-section"><h4>Liabilities to pay</h4>${table(['Person / organization','Due + arrears','Paid','Outstanding','Status',''],liabilityRows,'No liabilities due or outstanding for this month.')}</div>`;
 }
+
+function dashboardReminderHistory(){
+  const history=[];
+  reminders.forEach(reminder=>{
+    const tenant=tenants.find(item=>item.id===reminder.tenantId);
+    if(reminder.sentAt) history.push({name:tenant?tenant.name:'Tenant',type:'Rent',sentAt:reminder.sentAt});
+  });
+  moneyOwedToMe.forEach(loan=>{
+    (Array.isArray(loan.reminders)?loan.reminders:[]).forEach(reminder=>{
+      if(reminder.sentAt) history.push({name:loan.person||'Unnamed person',type:'Loan repayment',sentAt:reminder.sentAt});
+    });
+  });
+  interestLoans.forEach(loan=>{
+    (Array.isArray(loan.reminders)?loan.reminders:[]).forEach(reminder=>{
+      if(reminder.sentAt) history.push({name:loan.person||'Unnamed person',type:'Interest loan',sentAt:reminder.sentAt});
+    });
+  });
+  return history.sort((a,b)=>new Date(b.sentAt)-new Date(a.sentAt));
+}
+
+function toggleDashboardReminderHistory(){
+  const history=document.getElementById('dashboardReminderHistory');
+  const details=history&&history.querySelector('details');
+  if(!details) return;
+  details.open=!details.open;
+  if(details.open) details.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
 function renderDashboard(){
   const currentMonth = currentCycleKey();
   const currentRentReceived = rentReceivedForMonth(currentMonth);
@@ -2290,6 +2592,70 @@ function renderDashboard(){
   document.getElementById('dashboardAttention').innerHTML = attention.length
     ? `<div class="attention-list">${attention.slice(0,6).map(item=>`<div class="attention-item${item.overdue?' overdue':''}">${item.text}</div>`).join('')}</div>`
     : '<div class="empty-state">No overdue rent or money items to follow up.</div>';
+
+  const reminderHistory=dashboardReminderHistory();
+  const reminderLink=document.getElementById('dashboardReminderLink');
+  if(reminderLink) reminderLink.textContent=`Reminders (${reminderHistory.length})`;
+  document.getElementById('dashboardReminderHistory').innerHTML = `<details class="reminder-history">
+    <summary>Reminder history · ${reminderHistory.length} total</summary>
+    ${reminderHistory.length
+      ? `<ul>${reminderHistory.slice(0,20).map(item=>`<li><span>${escapeHtml(item.name)} · ${escapeHtml(item.type)}</span><strong>${escapeHtml(formatDateTimeISO(item.sentAt))}</strong></li>`).join('')}</ul>`
+      : '<div class="empty-state">No reminders have been sent yet.</div>'}
+  </details>`;
+}
+
+function buildDailyDueSummary(){
+  const month=currentCycleKey();
+  const lines=['*Daily Rent Ledger due summary*','Property: '+PROPERTY_NAME,'Date: '+displayDateKey(todayDateKey())];
+  const tenantDue=tenants.reduce((total,tenant)=>{
+    const entries=tenantRentBalanceEntries(tenant,month);
+    return total+entries.reduce((sum,entry)=>sum+entry.balance,0);
+  },0);
+  const loanDue=moneyOwedToMe.reduce((total,record)=>total+moneyOutstanding(record),0);
+  const interestDue=interestLoans.reduce((total,record)=>total+interestOutstandingThrough(record,todayDateKey())+interestPrincipalOutstandingThrough(record,todayDateKey()),0);
+  const liabilityDue=liabilities.reduce((total,record)=>total+liabilityBalanceThrough(record,month),0);
+  lines.push('Tenant rent outstanding: '+rs(tenantDue));
+  lines.push('Money owed to you: '+rs(loanDue));
+  lines.push('Interest loans outstanding: '+rs(interestDue));
+  lines.push('Money you owe: '+rs(liabilityDue));
+  lines.push('Total due to receive: '+rs(tenantDue+loanDue+interestDue));
+  lines.push('Open app: '+location.href);
+  return lines.join('\n');
+}
+function sendDailyDueEmail(){
+  settings.ownerEmail=document.getElementById('ownerEmail').value.trim();
+  saveData();
+  if(!settings.ownerEmail || !settings.ownerEmail.includes('@')){ alert('Enter your email address first.'); return; }
+  const subject=encodeURIComponent('Daily due summary - '+monthLabel(currentCycleKey()));
+  const body=encodeURIComponent(buildDailyDueSummary());
+  window.location.href='mailto:'+encodeURIComponent(settings.ownerEmail)+'?subject='+subject+'&body='+body;
+}
+function sendDailyDueWhatsApp(){
+  const phone=document.getElementById('ownerPhone').value.replace(/[^0-9]/g,'');
+  settings.ownerPhone=phone;
+  saveData();
+  if(phone.length<7 || phone.length>15){ alert('Enter your WhatsApp number with country code first.'); return; }
+  window.open('https://wa.me/'+phone+'?text='+encodeURIComponent(buildDailyDueSummary()),'_blank');
+}
+async function enableDailyBrowserReminder(){
+  if(!('Notification' in window)){ alert('Browser notifications are not supported on this device. Use Email or WhatsApp summary buttons instead.'); return; }
+  let permission=Notification.permission;
+  if(permission==='default') permission=await Notification.requestPermission();
+  if(permission!=='granted'){ alert('Notification permission was not granted.'); return; }
+  settings.dailyReminderEnabled=true;
+  settings.dailyReminderTime=new Date().toISOString();
+  saveData();
+  if(!window.dailyReminderTimer){
+    window.dailyReminderTimer=setInterval(()=>{
+      const last=localStorage.getItem(STORE_KEY+'.dailyReminderSent');
+      const today=todayDateKey();
+      if(last===today) return;
+      const summary=buildDailyDueSummary();
+      new Notification('Rent Ledger daily due summary',{body:summary.replace(/\*/g,' ').slice(0,180),tag:'rent-ledger-daily-due'});
+      localStorage.setItem(STORE_KEY+'.dailyReminderSent',today);
+    },60000);
+  }
+  alert('Daily browser reminder enabled while this app remains open. For guaranteed closed-app email/WhatsApp delivery, an external scheduler or backend is required.');
 }
 
 let photoData = '';
@@ -2318,7 +2684,8 @@ function showProfile(id){
   const i = agrInfo(t), n = new Date();
   const stay = t.since ? (()=>{ const s = new Date(t.since + 'T00:00:00'); const m = (n.getFullYear()-s.getFullYear())*12 + n.getMonth()-s.getMonth(); return Math.floor(m/12) + ' yr ' + (m%12) + ' mo'; })() : '';
   const row = (a,b)=> b ? `<div class="pr-row"><span>${a}</span><span style="text-align:right">${b}</span></div>` : '';
-  document.getElementById('prBody').innerHTML = `<div style="display:flex;gap:14px;align-items:center;margin-bottom:12px">${avatar(t).replace('class="av"','class="av" style="width:72px;height:72px;font-size:28px"')}<div><div style="font-family:'Fraunces',serif;font-size:22px">${escapeHtml(t.name)}</div><div class="t-small">+${escapeHtml(t.phone)}</div></div></div>
+  const secondary=Array.isArray(t.secondaryPhones)&&t.secondaryPhones.length?'<div class="t-small">Secondary: '+t.secondaryPhones.map(phone=>'+'+escapeHtml(phone)).join(', ')+'</div>':'';
+  document.getElementById('prBody').innerHTML = `<div style="display:flex;gap:14px;align-items:center;margin-bottom:12px">${avatar(t).replace('class="av"','class="av" style="width:72px;height:72px;font-size:28px"')}<div><div style="font-family:'Fraunces',serif;font-size:22px">${escapeHtml(t.name)}</div><div class="t-small">+${escapeHtml(t.phone)}</div>${secondary}</div></div>
     ${row('Flat / room', escapeHtml(t.flat||''))}${row('Staying since', t.since ? formatDate(new Date(t.since+'T00:00:00')) : '')}${row('Stayed for', stay)}
     ${row('Monthly rent', rs(t.amount))}${row('Security deposit', t.deposit ? rs(t.deposit) : '')}
     ${row('Agreement start', i ? formatDate(i.s) : '')}${row('Renewal reminder (11 mo)', i ? formatDate(i.r) : '')}${row('Agreement ends', i ? formatDate(i.e) : '')}
@@ -2335,7 +2702,7 @@ function sendRenewal(id){
   const nr = Math.round(Number(t.amount) * (1 + Number(pct||0)/100));
   const msg = `Dear ${t.name}, your rental agreement (started ${formatDate(i.s)}) completes 11 months on ${formatDate(i.r)} and ends on ${formatDate(i.e)}. Let us renew it. Proposed rent from the new agreement: ${rs(nr)}` + (Number(pct) ? ` (+${pct}%)` : '') + '. Please confirm.';
   t.noticeAt = new Date().toISOString(); saveData(); render();
-  window.open('https://wa.me/' + t.phone.replace(/[^0-9]/g,'') + '?text=' + encodeURIComponent(msg), '_blank');
+  openWhatsAppToTenant(t,msg);
 }
 function renewTenant(id){
   const t = tenants.find(x=>x.id===id); if(!t) return;
@@ -2351,6 +2718,12 @@ const SUPABASE_URL = SUPABASE_DIRECT;
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkZmZzY3BvaXpnY2h5cXNxcXBoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTY4MzgsImV4cCI6MjEwNzg3MjgzOH0.a02eCSp1vYwcHkL4ueK_GnTkcWSWST0Vz_9Mmt3Vz7I';
 const sb = (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase) ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 let user = null, pushT = null;
+
+function openOwnerFromHeader(){
+  const aboutTab=document.getElementById('aboutTab');
+  if(aboutTab){ aboutTab.click(); }
+  return false;
+}
 
 function togglePw(){
   const inp = document.getElementById('authPass');

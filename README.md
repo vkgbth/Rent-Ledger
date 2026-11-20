@@ -14,10 +14,15 @@ Rent Ledger is a lightweight, single-page rent-management app for landlords. It 
 - Track interest loans in their own tab, separate from the Money tracker. Enter the fixed monthly interest amount, collect from the month lent, and record interest and principal separately; prepare a gentle WhatsApp reminder with the current balance.
 - Track one-time and recurring monthly liabilities separately from tenants, record partial payments, and carry unpaid balances forward month by month.
 - Generate receipts that can be copied, printed/saved as PDF, or shared through WhatsApp.
+- For Money tracker collections and liability payments, open a proper printable/PDF receipt from payment history, track receipt send counts and send the receipt to all saved primary/secondary WhatsApp numbers.
+- Send repayment reminders for money lent and track the reminder count in the Money tracker and monthly collection tracker.
+- For each tenant, save one primary and multiple secondary WhatsApp numbers; reminders and receipts can open WhatsApp for every saved number.
+- Show the number of reminders sent for each tenant in the tenant list and monthly collection tracker, and show how many times each partial or full payment receipt was sent.
 - Generate printable rent due receipts and send a detailed due reminder on WhatsApp. Rent receipts and due notices identify the home as **Anatam Niwas**.
 - Compose rent and renewal reminders and open them in WhatsApp. The app does not send messages automatically; you review and send them in WhatsApp.
 - Use separate Dashboard, Tenants, Money tracker, and About tabs.
 - View creator details and photo with direct call and WhatsApp contact buttons in About.
+- Show the creator and owner photo and name prominently in the front-page header.
 - Download a JSON backup, or use the device share sheet to send it through WhatsApp or email when supported. Otherwise, attach the downloaded file manually.
 - Use browser-only storage, or sign in to sync a ledger through Supabase.
 - Install the responsive app on a phone's home screen as a PWA.
